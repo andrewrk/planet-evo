@@ -1,5 +1,9 @@
 package main
 
+import (
+	"math/rand"
+)
+
 type Vec2f struct {
 	X float32
 	Y float32
@@ -66,21 +70,27 @@ type World struct {
 	Height    int
 	Particles []Particle
 	Time      int64
+	Seed      int64
+	Rand      *rand.Rand
 }
 
-func NewWorld(width int, height int) *World {
+func NewWorld(width int, height int, seed int64) *World {
 	w := World{
 		Width:     width,
 		Height:    height,
 		Particles: make([]Particle, width*height),
+		Seed:      seed,
+		Rand:      rand.New(rand.NewSource(seed)),
 	}
+	w.Rand.Seed(seed)
+
 	waterTop := int(float32(height) * 0.5)
 	dirtTop := int(float32(height) * 0.9)
 	for y := waterTop; y < dirtTop; y++ {
 		for x := 0; x < width; x++ {
 			w.SetParticleAt(x, y, &BasicParticle{
 				Type: WaterParticle,
-				Position: Vec2f{float32(x), float32(y)},
+				Position: iv(x,y),
 			});
 		}
 	}
@@ -88,7 +98,7 @@ func NewWorld(width int, height int) *World {
 		for x := 0; x < width; x++ {
 			w.SetParticleAt(x, y, &BasicParticle{
 				Type: DirtParticle,
-				Position: Vec2f{float32(x), float32(y)},
+				Position: iv(x,y),
 			});
 		}
 	}
@@ -96,8 +106,22 @@ func NewWorld(width int, height int) *World {
 	return &w
 }
 
-func (w *World) Step() {
+func iv(x int, y int) Vec2f {
+	return Vec2f{float32(x), float32(y)}
+}
 
+func (w *World) Step() {
+	if w.Time % 20 == 0 {
+		// send a light beam down
+		x := w.Rand.Intn(w.Width)
+		w.SetParticleAt(x, 0, &BasicParticle{
+			Type: LightParticle,
+			Position: iv(x, 0),
+			Velocity: iv(0, 2),
+		});
+	}
+
+	w.Time += 1
 }
 
 func (w *World) ParticleAt(x int, y int) Particle {

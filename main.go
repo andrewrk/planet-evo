@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/scottferg/Go-SDL/sdl"
 	"os"
+	"time"
 )
 
 const (
@@ -29,15 +30,21 @@ func main() {
 
 	sdl.WM_SetCaption("Planet Evo", "")
 
-	w := NewWorld(1000, 600)
+	seed := int64(1234)
+	fmt.Printf("Using seed %d\n", seed)
+	w := NewWorld(1000, 600, seed)
+
+	go handleEvents()
+
+	frame := make(chan int, 1)
+	go func(){
+		for {
+			frame <- 1
+			time.Sleep(16 * time.Millisecond)
+		}
+	}()
 
 	for {
-		event := <-sdl.Events
-		switch event.(type) {
-		case sdl.QuitEvent:
-			os.Exit(0)
-		}
-
 		w.Step()
 		pix := &sdl.Rect{0, 0, 1, 1}
 		for y := 0; y < w.Height; y++ {
@@ -52,6 +59,17 @@ func main() {
 				}
 			}
 		}
+		<-frame
 		screen.Flip()
+	}
+}
+
+func handleEvents() {
+	for {
+		event := <-sdl.Events
+		switch event.(type) {
+		case sdl.QuitEvent:
+			os.Exit(0)
+		}
 	}
 }
