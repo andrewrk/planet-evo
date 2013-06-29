@@ -6,73 +6,14 @@ import (
 	"os"
 )
 
-type Dna struct {
-	Code  []byte
-	Index int // position in code to execute next
-}
-
-type ParticleType int
-
 const (
-	NoParticle ParticleType = iota
+	EmptyColor = 0xff000000
 )
-
-const (
-	SkyColor = 0x94B4DDff
-)
-
-type OrganicParticle struct {
-	IntactDna    Dna // original DNA
-	ExecutingDna Dna // starts as a copy of IntactDna
-	BasicParticle
-}
-
-func (p *OrganicParticle) GetColor() uint32 {
-	return p.Color
-}
-
-type BasicParticle struct {
-	Mass    float32
-	Density float32
-	Color   uint32
-}
-
-func (p *BasicParticle) GetColor() uint32 {
-	return p.Color
-}
-
-type Particle interface {
-	GetColor() uint32
-}
-
-type World struct {
-	Width     int
-	Height    int
-	Particles []Particle
-	Time      int64
-}
 
 type View struct {
 	OffsetX int
 	OffsetY int
 	Zoom    float32 // minimum 1 which is 1 pixel per particle
-}
-
-func NewWorld(width int, height int) *World {
-	w := World{
-		Width:     width,
-		Height:    height,
-		Particles: make([]Particle, width*height),
-	}
-	return &w
-}
-
-func (w *World) Step() {
-
-}
-
-func (w *World) ParticleAt(x int, y int) Particle {
-	return w.Particles[y*w.Width+x]
 }
 
 func main() {
@@ -105,7 +46,7 @@ func main() {
 				pix.X = int16(x)
 				particle := w.ParticleAt(x, y)
 				if particle == nil {
-					screen.FillRect(pix, SkyColor)
+					screen.FillRect(pix, EmptyColor)
 				} else {
 					screen.FillRect(pix, particle.GetColor())
 				}
