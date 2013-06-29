@@ -55,7 +55,7 @@ func main() {
 				if particle == nil {
 					screen.FillRect(pix, EmptyColor)
 				} else {
-					screen.FillRect(pix, particle.GetColor())
+					screen.FillRect(pix, particle.Color())
 				}
 			}
 		}

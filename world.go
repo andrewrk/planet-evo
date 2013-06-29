@@ -9,6 +9,11 @@ type Vec2f struct {
 	Y float32
 }
 
+func (v *Vec2f) Add(other *Vec2f) {
+	v.X += other.X
+	v.Y += other.Y
+}
+
 type Dna struct {
 	Code  []byte
 	Index int // position in code to execute next
@@ -34,23 +39,17 @@ const (
 	ChloroParticle
 )
 
-type OrganicParticle struct {
-	IntactDna    Dna // original DNA
-	ExecutingDna Dna // starts as a copy of IntactDna
-	BasicParticle
-}
-
-func (p *OrganicParticle) GetColor() uint32 {
-	return ParticleClasses[p.Type].Color
-}
-
-type BasicParticle struct {
+type Particle struct {
 	Type ParticleType
 	Position Vec2f
 	Velocity Vec2f
+
+	Organic bool
+	IntactDna    Dna // original DNA
+	ExecutingDna Dna // starts as a copy of IntactDna
 }
 
-func (p *BasicParticle) GetColor() uint32 {
+func (p *Particle) Color() uint32 {
 	return ParticleClasses[p.Type].Color
 }
 
@@ -61,24 +60,21 @@ type ParticleClass struct {
 	Color   uint32
 }
 
-type Particle interface {
-	GetColor() uint32
-}
-
 type World struct {
 	Width     int
 	Height    int
-	Particles []Particle
+	Particles []*Particle
 	Time      int64
 	Seed      int64
 	Rand      *rand.Rand
+	AltWorld  *World
 }
 
 func NewWorld(width int, height int, seed int64) *World {
 	w := World{
 		Width:     width,
 		Height:    height,
-		Particles: make([]Particle, width*height),
+		Particles: make([]*Particle, width*height),
 		Seed:      seed,
 		Rand:      rand.New(rand.NewSource(seed)),
 	}
@@ -88,7 +84,7 @@ func NewWorld(width int, height int, seed int64) *World {
 	dirtTop := int(float32(height) * 0.9)
 	for y := waterTop; y < dirtTop; y++ {
 		for x := 0; x < width; x++ {
-			w.SetParticleAt(x, y, &BasicParticle{
+			w.SetParticleAt(x, y, &Particle{
 				Type: WaterParticle,
 				Position: iv(x,y),
 			});
@@ -96,7 +92,7 @@ func NewWorld(width int, height int, seed int64) *World {
 	}
 	for y := dirtTop; y < height; y++ {
 		for x := 0; x < width; x++ {
-			w.SetParticleAt(x, y, &BasicParticle{
+			w.SetParticleAt(x, y, &Particle{
 				Type: DirtParticle,
 				Position: iv(x,y),
 			});
@@ -111,23 +107,42 @@ func iv(x int, y int) Vec2f {
 }
 
 func (w *World) Step() {
-	if w.Time % 20 == 0 {
-		// send a light beam down
-		x := w.Rand.Intn(w.Width)
-		w.SetParticleAt(x, 0, &BasicParticle{
-			Type: LightParticle,
-			Position: iv(x, 0),
-			Velocity: iv(0, 2),
-		});
+	// send a light particle down
+	x := w.Rand.Intn(w.Width)
+	w.SetParticleAt(x, 0, &Particle{
+		Type: LightParticle,
+		Position: iv(x, 0),
+		Velocity: Vec2f{0, 0.9},
+	});
+
+	for y := 0; y < w.Height; y++ {
+		for x := 0; x < w.Width; x++ {
+			p := w.ParticleAt(x, y)
+			if p == nil {
+				continue
+			}
+			w.ClearParticleAt(x, y)
+			p.Position.Add(&p.Velocity)
+			destPart := w.ParticleAt(int(p.Position.X), int(p.Position.Y))
+			if destPart == nil {
+				w.SetParticleAt(int(p.Position.X), int(p.Position.Y), p)
+			} else {
+				// light particle hits something and goes away
+			}
+		}
 	}
 
 	w.Time += 1
 }
 
-func (w *World) ParticleAt(x int, y int) Particle {
+func (w *World) ParticleAt(x int, y int) *Particle {
 	return w.Particles[y*w.Width+x]
 }
 
-func (w *World) SetParticleAt(x int, y int, p Particle) {
+func (w *World) ClearParticleAt(x int, y int) {
+	w.Particles[y * w.Width + x] = nil
+}
+
+func (w *World) SetParticleAt(x int, y int, p *Particle) {
 	w.Particles[y * w.Width + x] = p
 }
