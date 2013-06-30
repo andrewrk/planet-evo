@@ -2,6 +2,8 @@
 
 Evolution simulation software
 
+![](http://i.imgur.com/ts7HkqZ.png)
+
 ## DNA & Reproduction
 
 In this project, DNA is an array of bytes which have
