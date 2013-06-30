@@ -1,4 +1,3 @@
- * light, air
  * ability to grow a lifeform from a single particle which has DNA
 
 
@@ -7,4 +6,4 @@ probably too ambitious:
  * circular planet, use polar coordinates for everything
  * day/night cycle
  * seasons as the planet rotates around the star
-
+ * temperature

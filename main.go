@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-const (
-	EmptyColor = 0xff000000
-)
-
 type View struct {
 	OffsetX int
 	OffsetY int
@@ -37,7 +33,7 @@ func main() {
 	go handleEvents()
 
 	frame := make(chan int, 1)
-	go func(){
+	go func() {
 		for {
 			frame <- 1
 			time.Sleep(16 * time.Millisecond)
@@ -51,12 +47,7 @@ func main() {
 			pix.Y = int16(y)
 			for x := 0; x < w.Width; x++ {
 				pix.X = int16(x)
-				particle := w.ParticleAt(x, y)
-				if particle == nil {
-					screen.FillRect(pix, EmptyColor)
-				} else {
-					screen.FillRect(pix, particle.Color())
-				}
+				screen.FillRect(pix, w.ColorAt(x, y))
 			}
 		}
 		<-frame
