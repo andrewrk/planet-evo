@@ -158,14 +158,6 @@ func iv(x int, y int) Vec2f {
 func (w *World) Step() {
 	w.ClearAlt()
 
-	// send a light particle down
-	x := w.Rand.Intn(w.Width)
-	w.Particles[w.AltIndex(x, 0)] = Particle{
-		Type: LightParticle,
-		Position: iv(x, 0),
-		Velocity: Vec2f{0, 1},
-	}
-
 	// apply velocity to particles
 	for y := 0; y < w.Height; y++ {
 		for x := 0; x < w.Width; x++ {
@@ -179,6 +171,14 @@ func (w *World) Step() {
 			w.ApplyParticle(newPart)
 		}
 	}
+
+	// send a light particle down
+	x := w.Rand.Intn(w.Width)
+	w.ApplyParticle(Particle{
+		Type: LightParticle,
+		Position: iv(x, 1),
+		Velocity: Vec2f{0, 1},
+	})
 
 	w.Time += 1
 	w.Flip()
@@ -220,7 +220,7 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	target.Velocity.X = v2x
 	target.Velocity.Y = v2y
 
-	const maxCycles = 100
+	const maxCycles = 1000
 	for i := 0; i < maxCycles; i++ {
 		if !p.Position.FloorEql(&target.Position) {
 			w.ApplyParticle(target)
