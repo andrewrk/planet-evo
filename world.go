@@ -55,16 +55,21 @@ type ParticleClass struct {
 	BlockSunlight bool
 	BlockAir bool
 	Color   uint32
+	MaxEnergy float64
 }
 
 var ParticleClasses = []ParticleClass{
-	{"Null",   0, 0, false, false, 0xff000000},
-	{"Carbon", 1, 1, false, true,  0xff374B65},
-	{"Oxygen", 1, 1, false, true,  0xff94B4DD},
-	{"Dirt",   10, 1, true,  true,  0xff6B3000},
-	{"Water",  10, 1, false, true,  0xff21009D},
-	{"Light",  0, 0, false, false, 0xffFFF433},
-	{"Chloro", 1, 1, true,  true, 0xff0A7A00},
+	// non-organic particles
+	{"Null",   0, 0, false, false, 0xff000000, 0},
+	{"Carbon", 1, 1, false, true,  0xff374B65, 0},
+	{"Oxygen", 1, 1, false, true,  0xff94B4DD, 0},
+	{"Dirt",   10, 1, true,  true,  0xff6B3000, 0},
+	{"Water",  10, 1, false, true,  0xff21009D, 0},
+	{"Light",  0, 0, false, false, 0xffFFF433, 0},
+
+	// organic particles
+	{"Chloro", 4, 1, true,  true, 0xff0A7A00, 5},
+	{"Fiber", 6, 1, true,  true, 0xffB75900, 2},
 }
 
 const (
@@ -75,6 +80,7 @@ const (
 	WaterParticle
 	LightParticle
 	ChloroParticle
+	FiberParticle
 )
 
 type Particle struct {
