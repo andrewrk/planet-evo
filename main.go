@@ -13,6 +13,8 @@ type View struct {
 	Zoom    float32 // minimum 1 which is 1 pixel per particle
 }
 
+var world *World
+
 func main() {
 	if sdl.Init(sdl.INIT_VIDEO) != 0 {
 		fmt.Fprintf(os.Stderr, "SDL init error\n")
@@ -28,7 +30,7 @@ func main() {
 
 	seed := int64(1234)
 	fmt.Printf("Using seed %d\n", seed)
-	w := NewWorld(640, 480, seed)
+	world = NewWorld(640, 480, seed)
 
 	go handleEvents()
 
@@ -41,13 +43,13 @@ func main() {
 	}()
 
 	for {
-		w.Step()
+		world.Step()
 		pix := &sdl.Rect{0, 0, 1, 1}
-		for y := 0; y < w.Height; y++ {
+		for y := 0; y < world.Height; y++ {
 			pix.Y = int16(y)
-			for x := 0; x < w.Width; x++ {
+			for x := 0; x < world.Width; x++ {
 				pix.X = int16(x)
-				screen.FillRect(pix, w.ColorAt(x, y))
+				screen.FillRect(pix, world.ColorAt(x, y))
 			}
 		}
 		<-frame
@@ -58,9 +60,13 @@ func main() {
 func handleEvents() {
 	for {
 		event := <-sdl.Events
-		switch event.(type) {
+		switch e := event.(type) {
 		case sdl.QuitEvent:
 			os.Exit(0)
+		case sdl.MouseButtonEvent:
+			if e.Button == 1 && e.State == 1 {
+				world.SpawnRandomCreature(int(e.X), int(e.Y))
+			}
 		}
 	}
 }

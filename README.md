@@ -37,19 +37,19 @@ instruction-by-instruction basis.
 
 ### Core Instructions
 
-* 0 - Perform cell division. Parameters:
-  - CellDivisionEnergyForNewCell(ValueSource)
-  - CellDivisionDirection(Direction8)
-  - CellDivisionNewCellType(NewCellType)
-  - CellDivisionForkLabel(CodeLabel)
-  - CellDivisionContingencyPlan(BlockOrContinue)
+* 0 - Noop.
 * 1 - Perform cell death.
 * 2 - Jump. Parameters:
   - JumpOperandLeft(ValueSource)
   - JumpOperandRight(ValueSource)
   - JumpComparison(Comparison)
   - JumpLabel(CodeLabel)
-* 3 - Noop.
+* 3 - Perform cell division. Parameters:
+  - CellDivisionEnergyForNewCell(ValueSource)
+  - CellDivisionDirection(Direction8)
+  - CellDivisionNewCellType(NewCellType)
+  - CellDivisionForkLabel(CodeLabel)
+  - CellDivisionContingencyPlan(BlockOrContinue)
 * 4 - Wait. Parameters:
   - WaitSource(ValueSource)
 * 5 - Update a register with a value. Parameters:
@@ -63,31 +63,31 @@ instruction-by-instruction basis.
 * 7 - Modify DNA. Parameters:
   - ModifyDnaLabel(CodeLabel)
   - ModifyDnaSource(ValueSource)
-* 8 - Skip next instruction.
 
 ### Parameter Setting Instructions
 
-* 9 - CellDivisionEnergyForNewCell - default 5
-* A - CellDivisionDirection - default up
-* B - CellDivisionNewCellType - default none
-* C - CellDivisionForkLabel - default 0
-* D - CellDivisionContingencyPlan - default block
-* E - JumpOperandLeft - default Register X
-* F - JumpOperandRight - default Register X
-* G - JumpComparison - default left operand is non-zero
-* H - JumpLabel - default 0 (no jump - continue on next instruction)
-* I - WaitSource - default value 2
-* J - UpdateRegisterSource - default none
-* K - UpdateRegisterDest - default none
-* L - CalcOperandLeft - default none
-* M - CalcOperandRight - default none
-* N - CalcOperation - default left operand
-* O - CalcDest - default none
-* P - ModifyDnaLabel - default 1
-* Q - ModifyDnaSource - default register X
-* R - ValueSourceDirection - default up
-* S - ValueSourceNumber - default 0
-* T - ValueSourceLabel - default 1
+* 8 - CellDivisionEnergyForNewCell - default 5
+* 9 - CellDivisionDirection - default up
+* A - CellDivisionNewCellType - default none
+* B - CellDivisionForkLabel - default 0
+* C - CellDivisionContingencyPlan - default block
+* D - JumpOperandLeft - default Register X
+* E - JumpOperandRight - default Register X
+* F - JumpComparison - default left operand is non-zero
+* G - JumpLabel - default 0 (no jump - continue on next instruction)
+* H - WaitSource - default value 2
+* I - UpdateRegisterSource - default none
+* J - UpdateRegisterDest - default none
+* K - CalcOperandLeft - default none
+* L - CalcOperandRight - default none
+* M - CalcOperation - default left operand
+* N - CalcDest - default none
+* O - ModifyDnaLabel - default 1
+* P - ModifyDnaSource - default register X
+* Q - ValueSourceDirection - default up
+* R - ValueSourceNumber - default 0
+* S - ValueSourceLabel - default 1
+* T - ProgramEndBehavior(BlockOrContinue) - default continue
 
 ### Parameter Values
 
@@ -175,11 +175,6 @@ is adjusted to point to the same location.
 * 5 - top/right
 * 6 - bottom/left
 * 7 - bottom/right
-
-#### Direction2
-
-* 0 - positive
-* 1 - negative
 
 #### NewCellType
 

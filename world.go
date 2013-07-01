@@ -2,100 +2,9 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"os"
 )
-
-type Vec2f struct {
-	X float64
-	Y float64
-}
-
-func (v *Vec2f) Add(other *Vec2f) {
-	v.X += other.X
-	v.Y += other.Y
-}
-
-func (v *Vec2f) Subtract(other *Vec2f) {
-	v.X -= other.X
-	v.Y -= other.Y
-}
-
-func (v *Vec2f) Clear() {
-	v.X = 0
-	v.Y = 0
-}
-
-func (v *Vec2f) Negate() {
-	v.X = -v.X
-	v.Y = -v.Y
-}
-
-func (v *Vec2f) Scale(scalar float64) {
-	v.X *= scalar
-	v.Y *= scalar
-}
-
-func (v *Vec2f) FloorEql(other *Vec2f) bool {
-	return math.Floor(v.X) == math.Floor(other.X) && math.Floor(v.Y) == math.Floor(other.Y)
-}
-
-type Dna struct {
-	Instructions []uint16
-	Index        int // position in code to execute next
-}
-
-type ParticleType int
-
-type ParticleClass struct {
-	Name          string
-	Mass          float64
-	Density       float64
-	BlockSunlight bool
-	BlockAir      bool
-	Color         uint32
-	MaxEnergy     float64
-}
-
-var ParticleClasses = []ParticleClass{
-	// non-organic particles
-	{"Null", 0, 0, false, false, 0xff000000, 0},
-	{"Carbon", 1, 1, false, true, 0xff374B65, 0},
-	{"Oxygen", 1, 1, false, true, 0xff94B4DD, 0},
-	{"Dirt", 10, 1, true, true, 0xff6B3000, 0},
-	{"Water", 10, 1, false, true, 0xff21009D, 0},
-	{"Light", 0, 0, false, false, 0xffFFF433, 0},
-
-	// organic particles
-	{"Chloro", 4, 1, true, true, 0xff0A7A00, 5},
-	{"Fiber", 6, 1, true, true, 0xffB75900, 2},
-}
-
-const (
-	NullParticle ParticleType = iota
-	CarbonParticle
-	OxygenParticle
-	DirtParticle
-	WaterParticle
-	LightParticle
-	ChloroParticle
-	FiberParticle
-)
-
-type Particle struct {
-	Type     ParticleType
-	Position Vec2f
-	Velocity Vec2f
-
-	Organic      bool
-	IntactDna    Dna // original DNA
-	ExecutingDna Dna // starts as a copy of IntactDna
-}
-
-func (p *Particle) Color() uint32 {
-	return ParticleClasses[p.Type].Color
-}
 
 type World struct {
 	Width     int
@@ -173,6 +82,7 @@ func (w *World) Step() {
 				continue
 			}
 			newPart := sourcePart
+			newPart.StepDna(w)
 			newPart.Position.Add(&newPart.Velocity)
 			w.ApplyParticle(newPart)
 		}
@@ -343,3 +253,19 @@ func (w *World) ColorAt(x int, y int) uint32 {
 	p := w.Particles[w.Index(x, y)]
 	return ParticleClasses[p.Type].Color
 }
+
+func (w *World) SpawnRandomCreature(x int, y int) {
+	dna := w.CreateRandomDna()
+	p := Particle{
+		Type: ZygoteParticle,
+		Position: iv(x, y),
+		Organic: true,
+		Energy: ParticleClasses[ZygoteParticle].MaxEnergy,
+		IntactDna: dna,
+		ExecutingDna: dna.Clone(),
+	}
+	p.InitParamValues()
+	w.Particles[w.Index(x, y)] = p
+
+}
+
