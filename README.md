@@ -38,31 +38,31 @@ instruction-by-instruction basis.
 ### Core Instructions
 
 * 0 - Perform cell division. Parameters:
-      CellDivisionEnergyForNewCell(ValueSource)
-      CellDivisionDirection(Direction8)
-      CellDivisionNewCellType(NewCellType)
-      CellDivisionForkLabel(CodeLabel)
-      CellDivisionContingencyPlan(BlockOrContinue)
+  - CellDivisionEnergyForNewCell(ValueSource)
+  - CellDivisionDirection(Direction8)
+  - CellDivisionNewCellType(NewCellType)
+  - CellDivisionForkLabel(CodeLabel)
+  - CellDivisionContingencyPlan(BlockOrContinue)
 * 1 - Perform cell death.
 * 2 - Jump. Parameters:
-      JumpOperandLeft(ValueSource)
-      JumpOperandRight(ValueSource)
-      JumpComparison(Comparison)
-      JumpLabel(CodeLabel)
+  - JumpOperandLeft(ValueSource)
+  - JumpOperandRight(ValueSource)
+  - JumpComparison(Comparison)
+  - JumpLabel(CodeLabel)
 * 3 - Noop.
 * 4 - Wait. Parameters:
-      WaitSource(ValueSource)
+  - WaitSource(ValueSource)
 * 5 - Update a register with a value. Parameters:
-      UpdateRegisterSource(ValueSource)
-      UpdateRegisterDest(Register)
+  - UpdateRegisterSource(ValueSource)
+  - UpdateRegisterDest(Register)
 * 6 - Perform a calculation. Parameters:
-      CalcOperandLeft(ValueSource)
-      CalcOperandRight(ValueSource)
-      CalcOperation(Operation)
-      CalcDest(Register)
+  - CalcOperandLeft(ValueSource)
+  - CalcOperandRight(ValueSource)
+  - CalcOperation(Operation)
+  - CalcDest(Register)
 * 7 - Modify DNA. Parameters:
-      ModifyDnaLabel(CodeLabel)
-      ModifyDnaSource(ValueSource)
+  - ModifyDnaLabel(CodeLabel)
+  - ModifyDnaSource(ValueSource)
 * 8 - Skip next instruction.
 
 ### Parameter Setting Instructions
