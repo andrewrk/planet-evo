@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"math"
 )
 
@@ -292,11 +293,15 @@ func (p *Particle) getValueSource(op DnaOp, w *World) int {
 		return 5
 	case ValueSourceNeighborParticleType:
 		dir := p.getParamValByOp(ValueSourceDirectionOp)
-		x, y := getXYForDir(dir)
+		dx, dy := getXYForDir(dir)
+		x := int(math.Floor(p.Position.X)) + dx
+		y := int(math.Floor(p.Position.Y)) + dy
 		return int(w.Particles[w.Index(x, y)].Type)
 	case ValueSourceNeighborIsSameCellType:
 		dir := p.getParamValByOp(ValueSourceDirectionOp)
-		x, y := getXYForDir(dir)
+		dx, dy := getXYForDir(dir)
+		x := int(math.Floor(p.Position.X)) + dx
+		y := int(math.Floor(p.Position.Y)) + dy
 		if w.Particles[w.Index(x, y)].Type == p.Type {
 			return 1
 		} else {
@@ -357,6 +362,7 @@ func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc 
 	x := int(math.Floor(p.Position.X)) + dx
 	y := int(math.Floor(p.Position.Y)) + dy
 	// how is babby formed
+	fmt.Fprintf(os.Stderr, "Cell at %d, %d split into %s\n", x, y, ParticleClasses[newCellType].Name)
 	baby := Particle{
 		Type: newCellType,
 		Position: iv(x, y),
@@ -364,10 +370,92 @@ func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc 
 		Energy: energy,
 		IntactDna: p.IntactDna.Clone(),
 		ExecutingDna: p.ExecutingDna.Clone(),
+		OrganismAge: p.OrganismAge,
 	}
 	baby.InitParamValues()
 	baby.ExecutingDna.Index = pc
 	w.ApplyParticle(baby)
+}
+
+func (p *Particle) saveToRegister(op DnaOp, val int) {
+	switch p.getParamValByOp(op) {
+	default:
+		panic("unrecognized register")
+	case RegisterNone:
+		return
+	case RegisterX:
+		p.RegisterX = val
+	case RegisterY:
+		p.RegisterY = val
+	}
+}
+
+func (p *Particle) performCalc(op DnaOp, left int, right int) int {
+	switch p.getParamValByOp(op) {
+	case OperationLeft:
+		return left
+	case Operation0:
+		return 0
+	case Operation1:
+		return 1
+	case Operation2:
+		return 2
+	case OperationLeftPlus1:
+		return left + 1
+	case OperationLeftPlus2:
+		return left + 2
+	case OperationRight:
+		return right
+	case OperationRightPlus1:
+		return right + 1
+	case OperationRightPlus2:
+		return right + 2
+	case OperationLeftPlusRight:
+		return left + right
+	case OperationLeftMinusRight:
+		return left - right
+	case OperationRightMinusLeft:
+		return right - left
+	case OperationNegLeftNegRight:
+		return -left - right
+	case OperationLeftDivRight:
+		if right == 0 {
+			return 0
+		}
+		return left / right
+	case OperationRightDivLeft:
+		if left == 0 {
+			return 0
+		}
+		return right / left
+	case OperationLeftMult2:
+		return left * 2
+	case OperationRightMult2:
+		return right * 2
+	case OperationLeftModRight:
+		if right == 0 {
+			return 0
+		}
+		return left % right
+	case OperationRightModLeft:
+		if left == 0 {
+			return 0
+		}
+		return right % left
+	case OperationMin:
+		if left < right {
+			return left
+		}
+		return right
+	case OperationMax:
+		if left > right {
+			return left
+		}
+		return right
+	case OperationLeftMultRight:
+		return left * right
+	}
+	panic("unrecognized calculation")
 }
 
 func (p *Particle) StepDna(w *World) {
@@ -379,6 +467,11 @@ func (p *Particle) StepDna(w *World) {
 		// DNA program is permanently halted
 		return
 	}
+	if p.Waiting > 0 {
+		p.Waiting -= 1
+		return
+	}
+	pc = pc % len(p.ExecutingDna.Instructions)
 	instr := p.ExecutingDna.Instructions[pc]
 	pc += 1
 	var opCode DnaOp = DnaOp(instr.OpCode) % DnaOpCount
@@ -391,16 +484,19 @@ func (p *Particle) StepDna(w *World) {
 		case CellDivisionOp:
 			energyRequired := float64(p.getValueSource(CellDivisionEnergyForNewCellOp, w))
 			if p.Energy >= energyRequired {
-				p.Energy -= energyRequired
 				dir := p.getParamValByOp(CellDivisionDirectionOp)
 				x, y := getXYForDir(dir)
 				newCellType := p.getNewCellType(CellDivisionNewCellTypeOp)
+				if newCellType == NullParticle {
+					break
+				}
+				p.Energy -= energyRequired
 				doWeFork := p.getParamValByOp(CellDivisionDoWeForkOp)
 				newCellPc := pc
 				if doWeFork == 1 {
 					newCellPc = p.getParamValByOp(CellDivisionForkLabelOp)
 				}
-				p.Split(w, x, y, newCellType, newCellPc, energyRequired)
+				p.Split(w, x, y, newCellType, newCellPc, energyRequired - 1)
 			} else {
 				plan := p.getParamValByOp(CellDivisionContingencyPlanOp)
 				switch plan {
@@ -422,10 +518,21 @@ func (p *Particle) StepDna(w *World) {
 			if comp {
 				pc = newAddr
 			}
-		//case WaitOp:
-		//case UpdateRegisterOp:
-		//case CalcOp:
-		//case ModifyDnaOp:
+		case WaitOp:
+			p.Waiting = p.getValueSource(WaitSourceOp, w) % 16
+		case UpdateRegisterOp:
+			val := p.getValueSource(UpdateRegisterSourceOp, w)
+			p.saveToRegister(UpdateRegisterDestOp, val)
+		case CalcOp:
+			left := p.getValueSource(JumpOperandLeftOp, w)
+			right := p.getValueSource(JumpOperandRightOp, w)
+			val := p.performCalc(CalcOperationOp, left, right)
+			p.saveToRegister(CalcDestOp, val)
+		case ModifyDnaOp:
+			addr := p.getParamValByOp(ModifyDnaLabelOp)
+			addr = addr % len(p.ExecutingDna.Instructions)
+			val := p.getValueSource(ModifyDnaSourceOp, w)
+			p.ExecutingDna.Instructions[addr].Value = byte(val)
 		}
 	} else {
 		// set a parameter value
@@ -450,6 +557,4 @@ func (p *Particle) StepDna(w *World) {
 		}
 	}
 	p.ExecutingDna.Index = pc
-	p.Age += 1
-	p.OrganismAge += 1
 }

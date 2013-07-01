@@ -64,6 +64,7 @@ type Particle struct {
 	ParamValues  [ParameterOpCodeCount]int
 	RegisterX    int
 	RegisterY    int
+	Waiting      int // until this many steps are done, do nothing
 }
 
 
@@ -74,5 +75,17 @@ func (p *Particle) Color() uint32 {
 func (p *Particle) InitParamValues() {
 	for i := range p.ParamValues {
 		p.ParamValues[i] = ParameterInfos[i].Default
+	}
+}
+
+func (p *Particle) Step(w *World) {
+	if p.Organic && !p.Dead {
+		p.StepDna(w)
+		p.Age += 1
+		p.OrganismAge += 1
+		p.Energy -= 0.05
+		if p.Energy <= 0 {
+			p.Die()
+		}
 	}
 }

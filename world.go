@@ -82,7 +82,7 @@ func (w *World) Step() {
 				continue
 			}
 			newPart := sourcePart
-			newPart.StepDna(w)
+			newPart.Step(w)
 			newPart.Position.Add(&newPart.Velocity)
 			w.ApplyParticle(newPart)
 		}
@@ -203,6 +203,27 @@ func (w *World) ApplyParticle(p Particle) {
 			w.ResolveCollide(p, destPart)
 		}
 	case DirtParticle:
+		switch {
+		case destPart.Type == LightParticle:
+			w.ResolveReplace(p)
+		default:
+			w.ResolveCollide(p, destPart)
+		}
+	case FiberParticle:
+		switch {
+		case destPart.Type == LightParticle:
+			w.ResolveReplace(p)
+		default:
+			w.ResolveCollide(p, destPart)
+		}
+	case ChloroParticle:
+		switch {
+		case destPart.Type == LightParticle:
+			w.ResolveReplace(p)
+		default:
+			w.ResolveCollide(p, destPart)
+		}
+	case ZygoteParticle:
 		switch {
 		case destPart.Type == LightParticle:
 			w.ResolveReplace(p)
