@@ -89,12 +89,14 @@ func (w *World) Step() {
 	}
 
 	// send a light particle down
-	x := w.Rand.Intn(w.Width)
-	w.ApplyParticle(Particle{
-		Type:     LightParticle,
-		Position: iv(x, 1),
-		Velocity: Vec2f{0, 1},
-	})
+	for i := 0; i < 4; i++ {
+		x := w.Rand.Intn(w.Width)
+		w.ApplyParticle(Particle{
+			Type:     LightParticle,
+			Position: iv(x, 1),
+			Velocity: Vec2f{0, 1},
+		})
+	}
 
 	w.Time += 1
 	w.Flip()
@@ -182,6 +184,7 @@ func (w *World) ApplyParticle(p Particle) {
 	case LightParticle:
 		if ParticleClasses[destPart.Type].BlockSunlight {
 			// non-light particle wins
+			w.Particles[destIndex].Absorb(p)
 		} else {
 			// move the non-light particle in the negative direction of the light
 			w.ResolveDisplace(p, destPart)
@@ -206,6 +209,7 @@ func (w *World) ApplyParticle(p Particle) {
 		switch {
 		case destPart.Type == LightParticle:
 			w.ResolveReplace(p)
+			w.Particles[destIndex].Absorb(destPart)
 		default:
 			w.ResolveCollide(p, destPart)
 		}
@@ -213,6 +217,7 @@ func (w *World) ApplyParticle(p Particle) {
 		switch {
 		case destPart.Type == LightParticle:
 			w.ResolveReplace(p)
+			w.Particles[destIndex].Absorb(destPart)
 		default:
 			w.ResolveCollide(p, destPart)
 		}
@@ -220,6 +225,7 @@ func (w *World) ApplyParticle(p Particle) {
 		switch {
 		case destPart.Type == LightParticle:
 			w.ResolveReplace(p)
+			w.Particles[destIndex].Absorb(destPart)
 		default:
 			w.ResolveCollide(p, destPart)
 		}
@@ -227,6 +233,7 @@ func (w *World) ApplyParticle(p Particle) {
 		switch {
 		case destPart.Type == LightParticle:
 			w.ResolveReplace(p)
+			w.Particles[destIndex].Absorb(destPart)
 		default:
 			w.ResolveCollide(p, destPart)
 		}
@@ -276,17 +283,17 @@ func (w *World) ColorAt(x int, y int) uint32 {
 }
 
 func (w *World) SpawnRandomCreature(x int, y int) {
-	dna := w.CreateRandomDna()
+	//dna := w.CreateRandomDna()
+	dna := w.CreateSingleCelledPlant()
 	p := Particle{
-		Type: ZygoteParticle,
-		Position: iv(x, y),
-		Organic: true,
-		Energy: ParticleClasses[ZygoteParticle].MaxEnergy,
-		IntactDna: dna,
+		Type:         ZygoteParticle,
+		Position:     iv(x, y),
+		Organic:      true,
+		Energy:       ParticleClasses[ZygoteParticle].MaxEnergy,
+		IntactDna:    dna,
 		ExecutingDna: dna.Clone(),
 	}
 	p.InitParamValues()
 	w.Particles[w.Index(x, y)] = p
 
 }
-

@@ -35,4 +35,3 @@ func (v *Vec2f) Scale(scalar float64) {
 func (v *Vec2f) FloorEql(other *Vec2f) bool {
 	return math.Floor(v.X) == math.Floor(other.X) && math.Floor(v.Y) == math.Floor(other.Y)
 }
-

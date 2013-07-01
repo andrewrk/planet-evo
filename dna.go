@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"math"
+	"os"
 )
 
 type Instruction struct {
 	OpCode byte
-	Value byte
+	Value  byte
 }
 
 type Dna struct {
@@ -88,7 +88,7 @@ const ParameterOpCodeStart = CellDivisionEnergyForNewCellOp
 const ParameterOpCodeCount = DnaOpCount - ParameterOpCodeStart
 
 type ParameterInfo struct {
-	Type ParameterType
+	Type    ParameterType
 	Default int
 }
 
@@ -233,10 +233,30 @@ func getXYForDir(dir int) (x int, y int) {
 	panic("unknown direction")
 }
 
+func (w *World) CreateSingleCelledPlant() Dna {
+	dna := Dna {
+		Index: 0,
+		Instructions: []Instruction{
+			{byte(ProgramEndBehaviorOp), byte(BorCContinue)},
+			{byte(CellDivisionContingencyPlanOp), byte(BorCBlock)},
+			{byte(CellDivisionEnergyForNewCellOp), byte(ValueSource4)},
+			{byte(CellDivisionDirectionOp), byte(Direction8N)},
+			{byte(CellDivisionNewCellTypeOp), 1},
+			{byte(CellDivisionOp), 0},
+			{byte(CellDivisionEnergyForNewCellOp), byte(ValueSource1)},
+			{byte(CellDivisionOp), 0},
+			{byte(CellDivisionOp), 0},
+			{byte(CellDivisionOp), 0},
+			{byte(CellDivisionOp), 0},
+		},
+	}
+	return dna
+}
+
 func (w *World) CreateRandomDna() Dna {
 	const instrCount = 10
 	dna := Dna{
-		Index: 0,
+		Index:        0,
 		Instructions: make([]Instruction, instrCount),
 	}
 	for i := range dna.Instructions {
@@ -364,17 +384,30 @@ func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc 
 	// how is babby formed
 	fmt.Fprintf(os.Stderr, "Cell at %d, %d split into %s\n", x, y, ParticleClasses[newCellType].Name)
 	baby := Particle{
-		Type: newCellType,
-		Position: iv(x, y),
-		Organic: true,
-		Energy: energy,
-		IntactDna: p.IntactDna.Clone(),
+		Type:         newCellType,
+		Position:     iv(x, y),
+		Organic:      true,
+		Energy:       energy,
+		IntactDna:    p.IntactDna.Clone(),
 		ExecutingDna: p.ExecutingDna.Clone(),
-		OrganismAge: p.OrganismAge,
+		OrganismAge:  p.OrganismAge,
 	}
 	baby.InitParamValues()
 	baby.ExecutingDna.Index = pc
-	w.ApplyParticle(baby)
+	w.InsertParticle(baby, dx, dy)
+}
+
+func (w *World) InsertParticle(p Particle, dx int, dy int) {
+	index := w.AltIndexVec2f(p.Position)
+	destPart := w.Particles[index]
+	if destPart.Type == NullParticle {
+		w.Particles[index] = p
+		return
+	}
+	w.Particles[index] = p
+	destPart.Position.X += float64(dx)
+	destPart.Position.Y += float64(dy)
+	w.InsertParticle(destPart, dx, dy)
 }
 
 func (p *Particle) saveToRegister(op DnaOp, val int) {
@@ -482,7 +515,8 @@ func (p *Particle) StepDna(w *World) {
 		case NoOp:
 			// done. that was easy.
 		case CellDivisionOp:
-			energyRequired := float64(p.getValueSource(CellDivisionEnergyForNewCellOp, w))
+			newCellEnergy := float64(p.getValueSource(CellDivisionEnergyForNewCellOp, w))
+			energyRequired := newCellEnergy + 1
 			if p.Energy >= energyRequired {
 				dir := p.getParamValByOp(CellDivisionDirectionOp)
 				x, y := getXYForDir(dir)
@@ -490,13 +524,13 @@ func (p *Particle) StepDna(w *World) {
 				if newCellType == NullParticle {
 					break
 				}
-				p.Energy -= energyRequired
+				p.Energy -= newCellEnergy
 				doWeFork := p.getParamValByOp(CellDivisionDoWeForkOp)
 				newCellPc := pc
 				if doWeFork == 1 {
 					newCellPc = p.getParamValByOp(CellDivisionForkLabelOp)
 				}
-				p.Split(w, x, y, newCellType, newCellPc, energyRequired - 1)
+				p.Split(w, x, y, newCellType, newCellPc, newCellEnergy)
 			} else {
 				plan := p.getParamValByOp(CellDivisionContingencyPlanOp)
 				switch plan {
@@ -509,6 +543,7 @@ func (p *Particle) StepDna(w *World) {
 				}
 			}
 		case CellDeathOp:
+			fmt.Fprintf(os.Stderr, "Cell at %v triggered death.\n", p.Position)
 			p.Die()
 		case JumpOp:
 			left := p.getValueSource(JumpOperandLeftOp, w)
@@ -547,7 +582,7 @@ func (p *Particle) StepDna(w *World) {
 
 	}
 	if pc >= len(p.ExecutingDna.Instructions) {
-		switch p.ParamValues[ProgramEndBehaviorOp - ParameterOpCodeStart] {
+		switch p.ParamValues[ProgramEndBehaviorOp-ParameterOpCodeStart] {
 		default:
 			panic("unknown BlockOrContinue value")
 		case BorCBlock:

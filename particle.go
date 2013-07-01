@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"os"
+)
+
 type ParticleType int
 
 type ParticleClass struct {
@@ -52,7 +57,7 @@ type Particle struct {
 	Type     ParticleType
 	Position Vec2f
 	Velocity Vec2f
-	Organic      bool
+	Organic  bool
 
 	// only if particle is organic
 	Dead         bool
@@ -66,7 +71,6 @@ type Particle struct {
 	RegisterY    int
 	Waiting      int // until this many steps are done, do nothing
 }
-
 
 func (p *Particle) Color() uint32 {
 	return ParticleClasses[p.Type].Color
@@ -83,9 +87,25 @@ func (p *Particle) Step(w *World) {
 		p.StepDna(w)
 		p.Age += 1
 		p.OrganismAge += 1
-		p.Energy -= 0.05
+		p.Energy -= 0.0001
 		if p.Energy <= 0 {
+			fmt.Fprintf(os.Stderr, "Cell at %v ran out of energy.\n", p.Position)
 			p.Die()
 		}
+	}
+}
+
+func (p *Particle) Absorb(other Particle) {
+	if p.Type == ChloroParticle && other.Type == LightParticle {
+		fmt.Fprintf(os.Stderr, "Cell at %v +1 energy. now has %v\n", p.Position, p.Energy)
+		p.GainEnergy(1)
+	}
+}
+
+func (p *Particle) GainEnergy(amt int) {
+	p.Energy += 1
+	max := ParticleClasses[p.Type].MaxEnergy
+	if p.Energy > max {
+		p.Energy = max
 	}
 }
