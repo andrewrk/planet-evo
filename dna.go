@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math"
-	"errors"
 )
 
 type Instruction struct {
@@ -29,6 +28,7 @@ const (
 	NewCellTypeParam
 	BlockOrContinueParam
 	NumberParam
+	BooleanParam
 )
 
 var ParamCaps = []int{
@@ -36,11 +36,12 @@ var ParamCaps = []int{
 	int(RegisterParamCount),
 	int(ComparisonParamCount),
 	int(OperationParamCount),
-	256,
+	65535,
 	8,
 	int(OrganicParticleCount) + 1,
 	2,
 	256,
+	2,
 }
 
 const (
@@ -59,6 +60,7 @@ const (
 	CellDivisionDirectionOp
 	CellDivisionNewCellTypeOp
 	CellDivisionForkLabelOp
+	CellDivisionDoWeForkOp
 	CellDivisionContingencyPlanOp
 	JumpOperandLeftOp
 	JumpOperandRightOp
@@ -106,8 +108,7 @@ const (
 )
 
 const (
-	ValueSourceNone int = iota
-	ValueSourceRegisterX
+	ValueSourceRegisterX int = iota
 	ValueSourceRegisterY
 	ValueSourceCellAge
 	ValueSourceCellType
@@ -184,20 +185,21 @@ const (
 )
 
 var ParameterInfos = []ParameterInfo{
-	{ValueSourceParam, 5},
+	{ValueSourceParam, 5}, //CellDivisionEnergyForNewCellOp
 	{Direction8Param, Direction8N},
 	{NewCellTypeParam, 0},
 	{CodeLabelParam, 0},
+	{BooleanParam, 0}, // CellDivisionDoWeForkOp
 	{BlockOrContinueParam, BorCBlock},
-	{ValueSourceParam, ValueSourceRegisterX},
+	{ValueSourceParam, ValueSourceRegisterX}, // JumpOperandLeftOp
 	{ValueSourceParam, ValueSourceRegisterX},
 	{ComparisonParam, ComparisonLeftNonZero},
 	{CodeLabelParam, 0},
 	{ValueSourceParam, ValueSource2},
-	{ValueSourceParam, ValueSourceNone},
+	{ValueSourceParam, ValueSourceRegisterX},
 	{RegisterParam, RegisterNone},
-	{ValueSourceParam, ValueSourceNone},
-	{ValueSourceParam, ValueSourceNone},
+	{ValueSourceParam, ValueSourceRegisterX},
+	{ValueSourceParam, ValueSourceRegisterX},
 	{OperationParam, OperationLeft},
 	{RegisterParam, RegisterNone},
 	{CodeLabelParam, 1},
@@ -258,57 +260,54 @@ func (dna *Dna) Clone() Dna {
 
 func (p *Particle) getParamValByOp(op DnaOp) int {
 	paramIndex := op - ParameterOpCodeStart
-	return p.ParamValues[paramIndex]
+	val := p.ParamValues[paramIndex]
+	return val % ParamCaps[ParameterInfos[paramIndex].Type]
 }
 
-func (p *Particle) getValueSource(op DnaOp, w *World) (val int, err error) {
+func (p *Particle) getValueSource(op DnaOp, w *World) int {
 	switch p.getParamValByOp(op) {
-	default:
-		panic("unrecognized ValueSource")
-	case ValueSourceNone:
-		err = errors.New("none")
 	case ValueSourceRegisterX:
-		val = p.RegisterX
+		return p.RegisterX
 	case ValueSourceRegisterY:
-		val = p.RegisterY
+		return p.RegisterY
 	case ValueSourceCellAge:
-		val = p.Age
+		return p.Age
 	case ValueSourceCellType:
-		val = int(p.Type)
+		return int(p.Type)
 	case ValueSourceCellEnergy:
-		val = int(math.Floor(p.Energy))
+		return int(math.Floor(p.Energy))
 	case ValueSourceOrganismAge:
-		val = p.OrganismAge
+		return p.OrganismAge
 	case ValueSource0:
-		val = 0
+		return 0
 	case ValueSource1:
-		val = 1
+		return 1
 	case ValueSource2:
-		val = 2
+		return 2
 	case ValueSource3:
-		val = 3
+		return 3
 	case ValueSource4:
-		val = 4
+		return 4
 	case ValueSource5:
-		val = 5
+		return 5
 	case ValueSourceNeighborParticleType:
 		dir := p.getParamValByOp(ValueSourceDirectionOp)
 		x, y := getXYForDir(dir)
-		val = int(w.Particles[w.Index(x, y)].Type)
+		return int(w.Particles[w.Index(x, y)].Type)
 	case ValueSourceNeighborIsSameCellType:
 		dir := p.getParamValByOp(ValueSourceDirectionOp)
 		x, y := getXYForDir(dir)
 		if w.Particles[w.Index(x, y)].Type == p.Type {
-			val = 1
+			return 1
 		} else {
-			val = 0
+			return 0
 		}
 	case ValueSourceNumber:
-		val = p.getParamValByOp(ValueSourceNumberOp)
+		return p.getParamValByOp(ValueSourceNumberOp)
 	case ValueSourceLabel:
-		val = p.getParamValByOp(ValueSourceLabelOp)
+		return p.getParamValByOp(ValueSourceLabelOp)
 	}
-	return
+	panic("unrecognized ValueSource")
 }
 
 func (p *Particle) performComparison(op DnaOp, left int, right int) bool {
@@ -341,8 +340,38 @@ func (p *Particle) performComparison(op DnaOp, left int, right int) bool {
 	panic("unrecognized Comparison")
 }
 
+func (p *Particle) Die() {
+	p.Energy = 0
+	p.Dead = true
+}
+
+func (p *Particle) getNewCellType(op DnaOp) ParticleType {
+	newCellEnumValue := p.getParamValByOp(op)
+	if newCellEnumValue == 0 {
+		return NullParticle
+	}
+	return ParticleType(newCellEnumValue) - 1 + FirstOrganicParticle
+}
+
+func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc int, energy float64) {
+	x := int(math.Floor(p.Position.X)) + dx
+	y := int(math.Floor(p.Position.Y)) + dy
+	// how is babby formed
+	baby := Particle{
+		Type: newCellType,
+		Position: iv(x, y),
+		Organic: true,
+		Energy: energy,
+		IntactDna: p.IntactDna.Clone(),
+		ExecutingDna: p.ExecutingDna.Clone(),
+	}
+	baby.InitParamValues()
+	baby.ExecutingDna.Index = pc
+	w.ApplyParticle(baby)
+}
+
 func (p *Particle) StepDna(w *World) {
-	if !p.Organic {
+	if !p.Organic || p.Dead {
 		return
 	}
 	pc := p.ExecutingDna.Index
@@ -351,6 +380,7 @@ func (p *Particle) StepDna(w *World) {
 		return
 	}
 	instr := p.ExecutingDna.Instructions[pc]
+	pc += 1
 	var opCode DnaOp = DnaOp(instr.OpCode) % DnaOpCount
 	if opCode < ParameterOpCodeStart {
 		switch opCode {
@@ -359,18 +389,34 @@ func (p *Particle) StepDna(w *World) {
 		case NoOp:
 			// done. that was easy.
 		case CellDivisionOp:
-			fmt.Println("cell at", p.Position, "attempts cell division")
+			energyRequired := float64(p.getValueSource(CellDivisionEnergyForNewCellOp, w))
+			if p.Energy >= energyRequired {
+				p.Energy -= energyRequired
+				dir := p.getParamValByOp(CellDivisionDirectionOp)
+				x, y := getXYForDir(dir)
+				newCellType := p.getNewCellType(CellDivisionNewCellTypeOp)
+				doWeFork := p.getParamValByOp(CellDivisionDoWeForkOp)
+				newCellPc := pc
+				if doWeFork == 1 {
+					newCellPc = p.getParamValByOp(CellDivisionForkLabelOp)
+				}
+				p.Split(w, x, y, newCellType, newCellPc, energyRequired)
+			} else {
+				plan := p.getParamValByOp(CellDivisionContingencyPlanOp)
+				switch plan {
+				default:
+					panic("unrecognized contingency plan")
+				case BorCBlock:
+					pc -= 1
+				case BorCContinue:
+					break
+				}
+			}
 		case CellDeathOp:
-			fmt.Println("cell at", p.Position, "attempts cell death")
+			p.Die()
 		case JumpOp:
-			left, err := p.getValueSource(JumpOperandLeftOp, w)
-			if err != nil {
-				break
-			}
-			right, err := p.getValueSource(JumpOperandRightOp, w)
-			if err != nil {
-				break
-			}
+			left := p.getValueSource(JumpOperandLeftOp, w)
+			right := p.getValueSource(JumpOperandRightOp, w)
 			comp := p.performComparison(JumpComparisonOp, left, right)
 			newAddr := p.getParamValByOp(JumpLabelOp)
 			if comp {
@@ -388,12 +434,11 @@ func (p *Particle) StepDna(w *World) {
 		valueCap := ParamCaps[paramType]
 		newValue := int(instr.Value) % valueCap
 		if paramType == CodeLabelParam {
-			newValue += pc
+			newValue += pc - 1
 		}
 		p.ParamValues[paramIndex] = newValue
 
 	}
-	pc += 1
 	if pc >= len(p.ExecutingDna.Instructions) {
 		switch p.ParamValues[ProgramEndBehaviorOp - ParameterOpCodeStart] {
 		default:

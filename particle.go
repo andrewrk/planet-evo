@@ -55,6 +55,7 @@ type Particle struct {
 	Organic      bool
 
 	// only if particle is organic
+	Dead         bool
 	Energy       float64
 	Age          int
 	OrganismAge  int
