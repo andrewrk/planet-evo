@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"math"
 	"math/rand"
+	"os"
 )
 
 type Vec2f struct {
@@ -42,34 +42,34 @@ func (v *Vec2f) FloorEql(other *Vec2f) bool {
 }
 
 type Dna struct {
-	Code  []byte
-	Index int // position in code to execute next
+	Instructions []uint16
+	Index        int // position in code to execute next
 }
 
 type ParticleType int
 
 type ParticleClass struct {
-	Name    string
-	Mass    float64
-	Density float64
+	Name          string
+	Mass          float64
+	Density       float64
 	BlockSunlight bool
-	BlockAir bool
-	Color   uint32
-	MaxEnergy float64
+	BlockAir      bool
+	Color         uint32
+	MaxEnergy     float64
 }
 
 var ParticleClasses = []ParticleClass{
 	// non-organic particles
-	{"Null",   0, 0, false, false, 0xff000000, 0},
-	{"Carbon", 1, 1, false, true,  0xff374B65, 0},
-	{"Oxygen", 1, 1, false, true,  0xff94B4DD, 0},
-	{"Dirt",   10, 1, true,  true,  0xff6B3000, 0},
-	{"Water",  10, 1, false, true,  0xff21009D, 0},
-	{"Light",  0, 0, false, false, 0xffFFF433, 0},
+	{"Null", 0, 0, false, false, 0xff000000, 0},
+	{"Carbon", 1, 1, false, true, 0xff374B65, 0},
+	{"Oxygen", 1, 1, false, true, 0xff94B4DD, 0},
+	{"Dirt", 10, 1, true, true, 0xff6B3000, 0},
+	{"Water", 10, 1, false, true, 0xff21009D, 0},
+	{"Light", 0, 0, false, false, 0xffFFF433, 0},
 
 	// organic particles
-	{"Chloro", 4, 1, true,  true, 0xff0A7A00, 5},
-	{"Fiber", 6, 1, true,  true, 0xffB75900, 2},
+	{"Chloro", 4, 1, true, true, 0xff0A7A00, 5},
+	{"Fiber", 6, 1, true, true, 0xffB75900, 2},
 }
 
 const (
@@ -84,11 +84,11 @@ const (
 )
 
 type Particle struct {
-	Type ParticleType
+	Type     ParticleType
 	Position Vec2f
 	Velocity Vec2f
 
-	Organic bool
+	Organic      bool
 	IntactDna    Dna // original DNA
 	ExecutingDna Dna // starts as a copy of IntactDna
 }
@@ -125,10 +125,10 @@ func NewWorld(width int, height int, seed int64) *World {
 	for i := 0; i < carbonParticleCount; i++ {
 		x := w.Rand.Intn(w.Width)
 		y := w.Rand.Intn(waterTop)
-		vx := 0.2 - w.Rand.Float64() * 0.4
-		vy := 0.2 - w.Rand.Float64() * 0.4
+		vx := 0.2 - w.Rand.Float64()*0.4
+		vy := 0.2 - w.Rand.Float64()*0.4
 		w.Particles[w.Index(x, y)] = Particle{
-			Type: CarbonParticle,
+			Type:     CarbonParticle,
 			Position: iv(x, y),
 			Velocity: Vec2f{vx, vy},
 		}
@@ -138,8 +138,8 @@ func NewWorld(width int, height int, seed int64) *World {
 	for y := waterTop; y < dirtTop; y++ {
 		for x := 0; x < width; x++ {
 			w.Particles[w.Index(x, y)] = Particle{
-				Type: WaterParticle,
-				Position: iv(x,y),
+				Type:     WaterParticle,
+				Position: iv(x, y),
 			}
 		}
 	}
@@ -148,8 +148,8 @@ func NewWorld(width int, height int, seed int64) *World {
 	for y := dirtTop; y < height; y++ {
 		for x := 0; x < width; x++ {
 			w.Particles[w.Index(x, y)] = Particle{
-				Type: DirtParticle,
-				Position: iv(x,y),
+				Type:     DirtParticle,
+				Position: iv(x, y),
 			}
 		}
 	}
@@ -181,7 +181,7 @@ func (w *World) Step() {
 	// send a light particle down
 	x := w.Rand.Intn(w.Width)
 	w.ApplyParticle(Particle{
-		Type: LightParticle,
+		Type:     LightParticle,
 		Position: iv(x, 1),
 		Velocity: Vec2f{0, 1},
 	})
@@ -216,10 +216,10 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	v1 := p.Velocity
 	v2 := target.Velocity
 
-	v1x := (v1.X * (m1 - m2) + 2 * m2 * v2.X) / (m1 + m2)
-	v1y := (v1.Y * (m1 - m2) + 2 * m2 * v2.Y) / (m1 + m2)
-	v2x := (v2.X * (m2 - m1) + 2 * m1 * v1.X) / (m1 + m2)
-	v2y := (v2.Y * (m2 - m1) + 2 * m1 * v1.Y) / (m1 + m2)
+	v1x := (v1.X*(m1-m2) + 2*m2*v2.X) / (m1 + m2)
+	v1y := (v1.Y*(m1-m2) + 2*m2*v2.Y) / (m1 + m2)
+	v2x := (v2.X*(m2-m1) + 2*m1*v1.X) / (m1 + m2)
+	v2y := (v2.Y*(m2-m1) + 2*m1*v1.Y) / (m1 + m2)
 
 	p.Velocity.X = v1x
 	p.Velocity.Y = v1y
@@ -310,7 +310,7 @@ func (w *World) Flip() {
 
 func (w *World) ClearAlt() {
 	start := w.NextAltOffset()
-	end := start + w.Width * w.Height
+	end := start + w.Width*w.Height
 	for i := start; i < end; i++ {
 		w.Particles[i].Type = NullParticle
 	}
@@ -324,11 +324,11 @@ func (w *World) NextAltOffset() int {
 }
 
 func (w *World) Index(x int, y int) int {
-	return w.AltOffset + y*w.Width+x
+	return w.AltOffset + y*w.Width + x
 }
 
 func (w *World) AltIndex(x int, y int) int {
-	return w.NextAltOffset() + y*w.Width+x
+	return w.NextAltOffset() + y*w.Width + x
 }
 
 func (w *World) IndexVec2f(v Vec2f) int {
