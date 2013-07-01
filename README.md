@@ -6,10 +6,10 @@ Evolution simulation software
 
 ## DNA & Reproduction
 
-In this project, DNA is an array of bytes which have
-context-based meaning. When a character is interpreted, if the value is
-out of range, it is wrapped around (using modulus for example) as many times as
-necessary until a value in range is found.
+In this project, DNA is an array of instructions. Each instruction
+is 2 bytes. When an instruction is interpreted, if the 16-bit integer
+value is out of range, it is wrapped around (using modulus for example)
+as many times as necessary until a value in range is found.
 
 Each cell (particle) of an organism has a complete intact listing of its
 DNA, as well as a "currently executing" DNA. There is a pointer to the current
@@ -31,57 +31,75 @@ There are 2 registers, X and Y. Instead of parameters being data following the
 instructions, all parameters are global variables and each have their own
 instruction to set.
 
-* 0 - based on the particle to the (direction), jump to a (label)
-* 1 - based on the cell age, jump to a (label)
-* 2 - based on the organism age, jump to a (label)
-* 3 - wait for cell age modulo (number)
-* 4 - wait for organism age modulo (number)
-* 5 - wait for organism age (number)
-* 6 - set mode to ignore when instruction cannot be run
-* 7 - set mode to block when instruction cannot be run - this is the default
-* 8 - wait for cell age (number)
-* 9 - perform cell death
-* A - perform cell division (amount of energy to give new cell, cardinal/diagonal direction, new cell type)
-* B - noop
-* C - add or subtract to PC (number, positive/negative direction)
-* D - ignore the previous instruction
-* E - ignore the next instruction
-* F - update (register) with (byte)
-* G - update (register) with (value of particle to) (direction)
-* H - update (register) with (boolean whether or not particle to (direction) is of same organism)
-* I - update (register) with (boolean whether or not particle to (direction) is of same cell type)
-* J - update (register) with (value of label) * 2 
-* K - update (register) with (value of label) + 1
-* L - update (register) with (value of label) + 2
-* M - update (register) with (my own cell type)
-* N - update (label) with (register)
-* O - if register modulo 0, goto (label)
-* P - if register X is > register Y goto (label)
-* Q - update (register) with cell age
-* R - update (register) with organism age
-* S - perform cell division with fork (new cell energy) (direction) (new cell type) (label for new cell)
-* T - perform cell division with variable cell type (new cell energy) (direction) (register)
-* U - perform cell division with variable direction (new cell energy) (register) (new cell type)
-* V - perform cell division with fork and variable direction (new cell energy) (register) (new cell type) (label for new cell)
-* W - update (register1) with (register2) + 1
+All instructions are 2 bytes each. Since all instructions are the same size,
+mutations can be more easily and predictably applied on an
+instruction-by-instruction basis.
 
-Let's try that again.
+### Core Instructions
 
-* 0 - Perform cell division. Parameters: CellDivisionEnergyForNewCell, CellDivisionDirection, CellDivisionNewCellType, CellDivisionForkLabel
+* 0 - Perform cell division. Parameters:
+      CellDivisionEnergyForNewCell(ValueSource)
+      CellDivisionDirection(Direction8)
+      CellDivisionNewCellType(NewCellType)
+      CellDivisionForkLabel(CodeLabel)
+      CellDivisionContingencyPlan(BlockOrContinue)
 * 1 - Perform cell death.
-* 2 - Jump. Parameters: JumpOperandLeft JumpOperandRight JumpOperation JumpLabel
+* 2 - Jump. Parameters:
+      JumpOperandLeft(ValueSource)
+      JumpOperandRight(ValueSource)
+      JumpComparison(Comparison)
+      JumpLabel(CodeLabel)
 * 3 - Noop.
-* 4 - Wait. Parameters: WaitSource
+* 4 - Wait. Parameters:
+      WaitSource(ValueSource)
+* 5 - Update a register with a value. Parameters:
+      UpdateRegisterSource(ValueSource)
+      UpdateRegisterDest(Register)
+* 6 - Perform a calculation. Parameters:
+      CalcOperandLeft(ValueSource)
+      CalcOperandRight(ValueSource)
+      CalcOperation(Operation)
+      CalcDest(Register)
+* 7 - Modify DNA. Parameters:
+      ModifyDnaLabel(CodeLabel)
+      ModifyDnaSource(ValueSource)
+* 8 - Skip next instruction.
+
+### Parameter Setting Instructions
+
+* 9 - CellDivisionEnergyForNewCell - default 5
+* A - CellDivisionDirection - default up
+* B - CellDivisionNewCellType - default none
+* C - CellDivisionForkLabel - default 0
+* D - CellDivisionContingencyPlan - default block
+* E - JumpOperandLeft - default Register X
+* F - JumpOperandRight - default Register X
+* G - JumpComparison - default left operand is non-zero
+* H - JumpLabel - default 0 (no jump - continue on next instruction)
+* I - WaitSource - default value 2
+* J - UpdateRegisterSource - default none
+* K - UpdateRegisterDest - default none
+* L - CalcOperandLeft - default none
+* M - CalcOperandRight - default none
+* N - CalcOperation - default left operand
+* O - CalcDest - default none
+* P - ModifyDnaLabel - default 1
+* Q - ModifyDnaSource - default register X
+* R - ValueSourceDirection - default up
+* S - ValueSourceNumber - default 0
+* T - ValueSourceLabel - default 1
 
 ### Parameter Values
 
 All parameter values have a size of 256. If a value exceeds the bounds, it wraps.
 
-#### JumpOperandLeft / JumpOperandRight / WaitSource
+#### Register
 
-See Value Source
+* 0 - none - this operation is a noop
+* 1 - register X
+* 2 - register Y
 
-#### Value Source
+#### ValueSource
 
 * 0 - None. This operation is a noop.
 * 1 - Register X.
@@ -91,55 +109,89 @@ See Value Source
 * 5 - The value 0.
 * 6 - The value 1.
 * 7 - The value 2.
-* 8 - Type of particle to the left.
-* 9 - Type of particle to the right.
-* 10 - Type of particle to the up.
-* 11 - Type of particle to the down.
-* 12 - Type of particle to the top/left.
-* 13 - Type of particle to the top/right.
-* 14 - Type of particle to the bottom/left.
-* 15 - Type of particle to the bottom/right.
-* 16 - Count of cells in organism.
+* 8 - Type of particle to the ValueSourceDirection(Direction8).
+* 9 - Count of cells in organism.
+* A - Cell energy value.
+* B - The value 3.
+* C - The value 4.
+* D - The value 5.
+* E - Boolean whether particle to ValueSourceDirection(Direction8) is same organism.
+* F - Boolean whether particle to ValueSourceDirection(Direction8) is same cell type.
+* G - ValueSourceNumber(Number)
+* H - ValueSourceLabel(CodeLabel)
+* I - My own cell type.
 
-#### JumpLabel
+#### Comparison
 
-See Code Label
+* 0 - Never
+* 1 - Always
+* 2 - Left operand is zero
+* 3 - Left operand greater than right operand
+* 4 - Left operand less than right operand
+* 5 - Left operand equal right operand
+* 6 - Left operand greator or equal to right operand
+* 7 - Left operand less or equal to right operand
+* 8 - Right operand is non-zero
+* 9 - Right operand is zero
+* A - Left operand is non-zero
 
-#### CellDivisionEnergyForNewCell
+#### Operation
 
-Number, 0 - 100
+* 0 - left operand
+* 1 - 1
+* 2 - 2
+* 3 - 0
+* 4 - left operand + 1
+* 5 - left operand + 2
+* 6 - right operand
+* 7 - right operand + 1
+* 8 - right operand + 2
+* 9 - left operand + right operand
+* A - left operand - right operand
+* B - right operand - left operand
+* C - -left operand - right operand
+* D - left operand / right operand
+* E - right operand / left operand
+* F - left operand * 2
+* G - right operand * 2
+* H - left operand mod right operand
+* I - right operand mod left operand
+* J - return which is smaller: left or right operand
+* K - return which is larger: left or right operand
+* L - left operand * right operand
 
-#### CellDivisionDirection
+#### CodeLabel
 
-See Cardinal/Diagonal Direction
-
-#### CellDivisionNewCellType
-
-See New Cell Type
-
-#### CellDivisionForkLabel
-
-See Code Label
-
-#### Code Label
-
-Number, 0 - 256. Number of bytes offset. When a mutation occurs, this number
+Number of bytes offset [0, 255]. When a mutation occurs, this number
 is adjusted to point to the same location.
 
-#### Cardinal/Diagonal Direction
-* 0 - left
-* 1 - right
-* 2 - up
-* 3 - down
+#### Direction8
+
+* 0 - up
+* 1 - down
+* 2 - left
+* 3 - right
 * 4 - top/left
 * 5 - top/right
 * 6 - bottom/left
 * 7 - bottom/right
 
-#### Positive/Negative Direction
+#### Direction2
+
 * 0 - positive
 * 1 - negative
 
-#### New Cell Type
-* 0 - Chloro
-* 1 - Fiber
+#### NewCellType
+
+* 0 - None - this instruction is a noop
+* 1 - Chloro
+* 2 - Fiber
+
+#### BlockOrContinue
+
+* 0 - Block - stay on this instruction until conditions are satisfied
+* 1 - Continue - ignore this instruction if conditions are not satisfied
+
+#### Number
+
+Integer from [0, 255]

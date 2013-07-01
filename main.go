@@ -18,7 +18,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "SDL init error\n")
 		return
 	}
-	screen := sdl.SetVideoMode(1000, 600, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
+	screen := sdl.SetVideoMode(640, 480, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
 	if screen == nil {
 		fmt.Fprintf(os.Stderr, "SDL setvideomode error\n")
 		return
@@ -28,7 +28,7 @@ func main() {
 
 	seed := int64(1234)
 	fmt.Printf("Using seed %d\n", seed)
-	w := NewWorld(1000, 600, seed)
+	w := NewWorld(640, 480, seed)
 
 	go handleEvents()
 
