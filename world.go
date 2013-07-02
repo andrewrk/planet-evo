@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"math"
 	"os"
 )
 
@@ -118,36 +119,79 @@ func (w *World) ResolveReplace(p Particle) {
 }
 
 func (w *World) ResolveCollide(p Particle, target Particle) {
-	pos := p.Position
 	destIndex := w.AltIndexVec2f(p.Position)
 	w.Particles[destIndex].Type = NullParticle
 
 	m1 := ParticleClasses[p.Type].Mass
 	m2 := ParticleClasses[target.Type].Mass
+	e1 := ParticleClasses[p.Type].Elasticity
+	e2 := ParticleClasses[target.Type].Elasticity
 	v1 := p.Velocity
 	v2 := target.Velocity
 
-	v1x := (v1.X*(m1-m2) + 2*m2*v2.X) / (m1 + m2)
-	v1y := (v1.Y*(m1-m2) + 2*m2*v2.Y) / (m1 + m2)
-	v2x := (v2.X*(m2-m1) + 2*m1*v1.X) / (m1 + m2)
-	v2y := (v2.Y*(m2-m1) + 2*m1*v1.Y) / (m1 + m2)
+	v1x := e1 * (v1.X*(m1-m2) + 2*m2*v2.X) / (m1 + m2)
+	v1y := e1 * (v1.Y*(m1-m2) + 2*m2*v2.Y) / (m1 + m2)
+	v2x := e2 * (v2.X*(m2-m1) + 2*m1*v1.X) / (m1 + m2)
+	v2y := e2 * (v2.Y*(m2-m1) + 2*m1*v1.Y) / (m1 + m2)
 
 	p.Velocity.X = v1x
 	p.Velocity.Y = v1y
 	target.Velocity.X = v2x
 	target.Velocity.Y = v2y
 
-	const maxCycles = 1000
-	for i := 0; i < maxCycles; i++ {
-		if !p.Position.FloorEql(&target.Position) {
-			w.ApplyParticle(target)
-			w.ApplyParticle(p)
-			return
-		}
-		p.Position.Add(&p.Velocity)
-		target.Position.Add(&target.Velocity)
+
+	// based on the new velocities, calculate how much we must add to the
+	// the positions until a particle exits this pixel
+	p1x := p.Position.X
+	p1y := p.Position.Y
+	p2x := target.Position.X
+	p2y := target.Position.Y
+
+	// take the decimal part only so these values represent the position
+	// within the pixel
+	p1x -= math.Floor(p1x)
+	p1y -= math.Floor(p1y)
+	p2x -= math.Floor(p2x)
+	p2y -= math.Floor(p2y)
+
+	// adjust based on the velocities so that these values represent the
+	// distance that must be traveled to exit the pixel
+	if v1x > 0 {
+		p1x = 1 - p1x
+	} else {
+		p1x += 0.00001
 	}
-	fmt.Fprintf(os.Stderr, "Error resolving collision at %v\n", pos)
+	if v1y > 0 {
+		p1y = 1 - p1y
+	} else {
+		p1y += 0.00001
+	}
+	if v2x > 0 {
+		p2x = 1 - p2x
+	} else {
+		p2x += 0.00001
+	}
+	if v2y > 0 {
+		p2y = 1 - p2y
+	} else {
+		p2y += 0.00001
+	}
+
+	// calculate the time it will take for each to exit the pixel
+	t1x := p1x / math.Abs(v1x)
+	t1y := p1y / math.Abs(v1y)
+	t2x := p2x / math.Abs(v2x)
+	t2y := p2y / math.Abs(v2y)
+
+	// whichever one is smaller is the answer
+	t := math.Min(t1x, math.Min(t1y, math.Min(t2x, t2y)))
+	p.Position.X += v1x * t
+	p.Position.Y += v1y * t
+	target.Position.X += v2x * t
+	target.Position.Y += v2y * t
+
+	w.ApplyParticle(target)
+	w.ApplyParticle(p)
 }
 
 // handle particle collisions
@@ -159,15 +203,14 @@ func (w *World) ApplyParticle(p Particle) {
 	if p.Position.X < 0 {
 		p.Position.X += float64(w.Width)
 	}
-	// bounce off top
+	// if particles leave out the top, they escape forever
 	if p.Position.Y < 0 {
-		p.Position.Y = 0
-		p.Velocity.Y = -p.Velocity.Y
+		return
 	}
-	// bounce off bottom
+	// bottom is an impenetreble wall
 	if p.Position.Y >= float64(w.Height) {
 		p.Position.Y = float64(w.Height) - 1
-		p.Velocity.Y = -p.Velocity.Y
+		p.Velocity.Y = -p.Velocity.Y * ParticleClasses[p.Type].Elasticity
 	}
 
 	destIndex := w.AltIndexVec2f(p.Position)
