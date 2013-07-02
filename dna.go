@@ -30,6 +30,7 @@ const (
 	BlockOrContinueParam
 	NumberParam
 	BooleanParam
+	MutationChanceParam
 )
 
 var ParamCaps = []int{
@@ -43,6 +44,7 @@ var ParamCaps = []int{
 	2,
 	256,
 	2,
+	256,
 }
 
 const (
@@ -80,6 +82,7 @@ const (
 	ValueSourceNumberOp
 	ValueSourceLabelOp
 	ProgramEndBehaviorOp
+	MutationChanceOp
 
 	// meta
 	DnaOpCount
@@ -125,6 +128,7 @@ const (
 	ValueSourceNeighborIsSameCellType
 	ValueSourceNumber
 	ValueSourceLabel
+	ValueSourceRandom
 
 	// meta
 	ValueSourceParamCount
@@ -209,6 +213,15 @@ var ParameterInfos = []ParameterInfo{
 	{NumberParam, 0},
 	{CodeLabelParam, 1},
 	{BlockOrContinueParam, BorCContinue},
+	{MutationChanceParam, 52},
+}
+
+func (p *Particle) getMutationChance() float64 {
+	param := p.getParamValByOp(MutationChanceOp)
+	const max = 0.05
+	const min = 0.0001
+	percent := float64(param) / 255
+	return min + (percent * (max - min))
 }
 
 func getXYForDir(dir int) (x int, y int) {
@@ -272,7 +285,80 @@ func (w *World) CreateRandomInstruction() Instruction {
 	}
 }
 
-func (dna *Dna) Clone() Dna {
+type CodeLabel struct {
+	Pc int
+	Addr int
+}
+
+func (dna *Dna) Clone(p *Particle, w *World) Dna {
+	newDna := *dna
+	newDna.Instructions = make([]Instruction, 0, len(dna.Instructions))
+	mutationChance := p.getMutationChance()
+	// identify all code labels so we can preserve them
+	labels := make([]CodeLabel, 0)
+	for pc, instr := range dna.Instructions {
+		opCode := DnaOp(instr.OpCode) % DnaOpCount
+		paramIndex := opCode - ParameterOpCodeStart
+		if paramIndex >= 0 {
+			paramType := ParameterInfos[paramIndex].Type
+			if paramType == CodeLabelParam {
+				addr := int(instr.Value) + pc
+				labels = append(labels, CodeLabel{ pc, addr })
+			}
+		}
+	}
+	// copy instructions one at a time
+	for _, instr := range dna.Instructions {
+		// roll the dice
+		roll := w.Rand.Float64()
+		if roll <= mutationChance {
+			switch w.Rand.Intn(3) {
+			case 0: // 1/3 chance insert a byte here
+			newDna.Instructions = append(newDna.Instructions, Instruction{
+				byte(w.Rand.Intn(256)),
+				byte(w.Rand.Intn(256)),
+			})
+			oldPc := len(newDna.Instructions)
+			newDna.Instructions = append(newDna.Instructions, instr)
+			// adjust labels - add 1 to every PC >= oldPc
+			for i, label := range labels {
+				if label.Pc >= oldPc {
+					labels[i].Pc += 1
+					labels[i].Addr += 1
+				} else if label.Addr >= oldPc {
+					labels[i].Addr += 1
+				}
+			}
+			case 1: // 1/3 chance don't copy this byte
+			oldPc := len(newDna.Instructions) + 1
+			// adjust labels - subtract 1 from every PC >= oldPc
+			for i, label := range labels {
+				if label.Pc >= oldPc {
+					labels[i].Pc -= 1
+					labels[i].Addr -= 1
+				} else if label.Addr >= oldPc {
+					labels[i].Addr -= 1
+				}
+			}
+			case 2: // 1/3 chance mangle the byte
+			newDna.Instructions = append(newDna.Instructions, Instruction{
+				byte(w.Rand.Intn(256)),
+				byte(w.Rand.Intn(256)),
+			})
+			}
+		} else {
+			// copy the instruction correctly
+			newDna.Instructions = append(newDna.Instructions, instr)
+		}
+	}
+	// apply label adjustments
+	for _, label := range labels {
+		newDna.Instructions[label.Pc].Value = byte(label.Addr - label.Pc)
+	}
+	return newDna
+}
+
+func (dna *Dna) PerfectClone() Dna {
 	newDna := *dna
 	newDna.Instructions = make([]Instruction, len(dna.Instructions))
 	copy(newDna.Instructions, dna.Instructions)
@@ -331,6 +417,8 @@ func (p *Particle) getValueSource(op DnaOp, w *World) int {
 		return p.getParamValByOp(ValueSourceNumberOp)
 	case ValueSourceLabel:
 		return p.getParamValByOp(ValueSourceLabelOp)
+	case ValueSourceRandom:
+		return w.Rand.Intn(256)
 	}
 	panic("unrecognized ValueSource")
 }
@@ -388,8 +476,8 @@ func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc 
 		Position:     iv(x, y),
 		Organic:      true,
 		Energy:       energy,
-		IntactDna:    p.IntactDna.Clone(),
-		ExecutingDna: p.ExecutingDna.Clone(),
+		IntactDna:    p.IntactDna.Clone(p, w),
+		ExecutingDna: p.ExecutingDna.Clone(p, w),
 		OrganismAge:  p.OrganismAge,
 	}
 	baby.InitParamValues()

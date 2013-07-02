@@ -36,6 +36,10 @@ All instructions are 2 bytes each. Since all instructions are the same size,
 mutations can be more easily and predictably applied on an
 instruction-by-instruction basis.
 
+Note: This explanation in the README file will not be kept up to date with the
+actual implementation. It serves to explain how it works, but the details may
+be incorrect.
+
 ### Core Instructions
 
 * 0 - Noop.

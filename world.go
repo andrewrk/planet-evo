@@ -290,7 +290,7 @@ func (w *World) SpawnRandomCreature(x int, y int) {
 		Organic:      true,
 		Energy:       ParticleClasses[ZygoteParticle].MaxEnergy,
 		IntactDna:    dna,
-		ExecutingDna: dna.Clone(),
+		ExecutingDna: dna.PerfectClone(),
 	}
 	p.InitParamValues()
 	w.Particles[w.Index(x, y)] = p
