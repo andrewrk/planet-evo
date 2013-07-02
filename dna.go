@@ -247,7 +247,7 @@ func getXYForDir(dir int) (x int, y int) {
 }
 
 func (w *World) CreateSingleCelledPlant() Dna {
-	dna := Dna {
+	dna := Dna{
 		Index: 0,
 		Instructions: []Instruction{
 			{byte(ProgramEndBehaviorOp), byte(BorCContinue)},
@@ -286,7 +286,7 @@ func (w *World) CreateRandomInstruction() Instruction {
 }
 
 type CodeLabel struct {
-	Pc int
+	Pc   int
 	Addr int
 }
 
@@ -303,7 +303,7 @@ func (dna *Dna) Clone(p *Particle, w *World) Dna {
 			paramType := ParameterInfos[paramIndex].Type
 			if paramType == CodeLabelParam {
 				addr := int(instr.Value) + pc
-				labels = append(labels, CodeLabel{ pc, addr })
+				labels = append(labels, CodeLabel{pc, addr})
 			}
 		}
 	}
@@ -314,37 +314,37 @@ func (dna *Dna) Clone(p *Particle, w *World) Dna {
 		if roll <= mutationChance {
 			switch w.Rand.Intn(3) {
 			case 0: // 1/3 chance insert a byte here
-			newDna.Instructions = append(newDna.Instructions, Instruction{
-				byte(w.Rand.Intn(256)),
-				byte(w.Rand.Intn(256)),
-			})
-			oldPc := len(newDna.Instructions)
-			newDna.Instructions = append(newDna.Instructions, instr)
-			// adjust labels - add 1 to every PC >= oldPc
-			for i, label := range labels {
-				if label.Pc >= oldPc {
-					labels[i].Pc += 1
-					labels[i].Addr += 1
-				} else if label.Addr >= oldPc {
-					labels[i].Addr += 1
+				newDna.Instructions = append(newDna.Instructions, Instruction{
+					byte(w.Rand.Intn(256)),
+					byte(w.Rand.Intn(256)),
+				})
+				oldPc := len(newDna.Instructions)
+				newDna.Instructions = append(newDna.Instructions, instr)
+				// adjust labels - add 1 to every PC >= oldPc
+				for i, label := range labels {
+					if label.Pc >= oldPc {
+						labels[i].Pc += 1
+						labels[i].Addr += 1
+					} else if label.Addr >= oldPc {
+						labels[i].Addr += 1
+					}
 				}
-			}
 			case 1: // 1/3 chance don't copy this byte
-			oldPc := len(newDna.Instructions) + 1
-			// adjust labels - subtract 1 from every PC >= oldPc
-			for i, label := range labels {
-				if label.Pc >= oldPc {
-					labels[i].Pc -= 1
-					labels[i].Addr -= 1
-				} else if label.Addr >= oldPc {
-					labels[i].Addr -= 1
+				oldPc := len(newDna.Instructions) + 1
+				// adjust labels - subtract 1 from every PC >= oldPc
+				for i, label := range labels {
+					if label.Pc >= oldPc {
+						labels[i].Pc -= 1
+						labels[i].Addr -= 1
+					} else if label.Addr >= oldPc {
+						labels[i].Addr -= 1
+					}
 				}
-			}
 			case 2: // 1/3 chance mangle the byte
-			newDna.Instructions = append(newDna.Instructions, Instruction{
-				byte(w.Rand.Intn(256)),
-				byte(w.Rand.Intn(256)),
-			})
+				newDna.Instructions = append(newDna.Instructions, Instruction{
+					byte(w.Rand.Intn(256)),
+					byte(w.Rand.Intn(256)),
+				})
 			}
 		} else {
 			// copy the instruction correctly

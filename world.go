@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"math"
+	"math/rand"
 	"os"
 )
 
@@ -138,7 +138,6 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	p.Velocity.Y = v1y
 	target.Velocity.X = v2x
 	target.Velocity.Y = v2y
-
 
 	// based on the new velocities, calculate how much we must add to the
 	// the positions until a particle exits this pixel
