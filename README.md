@@ -7,9 +7,10 @@ Evolution simulation software
 ## DNA & Reproduction
 
 In this project, DNA is an array of instructions. Each instruction
-is 2 bytes. When an instruction is interpreted, if the 16-bit integer
-value is out of range, it is wrapped around (using modulus for example)
-as many times as necessary until a value in range is found.
+is 2 bytes. The first byte is the opcode, and the second byte is a
+value. When a value is out of range, it is wrapped around
+(using modulus for example) as many times as necessary until a value
+in range is found.
 
 Each cell (particle) of an organism has a complete intact listing of its
 DNA, as well as a "currently executing" DNA. There is a pointer to the current

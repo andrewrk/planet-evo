@@ -14,13 +14,17 @@ type View struct {
 }
 
 var world *World
+var speed = 1
 
 func main() {
+	const width = 200
+	const height = 200
+
 	if sdl.Init(sdl.INIT_VIDEO) != 0 {
 		fmt.Fprintf(os.Stderr, "SDL init error\n")
 		return
 	}
-	screen := sdl.SetVideoMode(640, 480, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
+	screen := sdl.SetVideoMode(width, height, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
 	if screen == nil {
 		fmt.Fprintf(os.Stderr, "SDL setvideomode error\n")
 		return
@@ -30,7 +34,7 @@ func main() {
 
 	seed := int64(1234)
 	fmt.Printf("Using seed %d\n", seed)
-	world = NewWorld(640, 480, seed)
+	world = NewWorld(width, height, seed)
 
 	go handleEvents()
 
@@ -43,7 +47,9 @@ func main() {
 	}()
 
 	for {
-		world.Step()
+		for i := 0; i < speed; i++ {
+			world.Step()
+		}
 		pix := &sdl.Rect{0, 0, 1, 1}
 		for y := 0; y < world.Height; y++ {
 			pix.Y = int16(y)
@@ -63,6 +69,20 @@ func handleEvents() {
 		switch e := event.(type) {
 		case sdl.QuitEvent:
 			os.Exit(0)
+		case sdl.KeyboardEvent:
+			if e.State == 1 {
+				switch e.Keysym.Sym {
+				case sdl.K_RIGHTBRACKET:
+					speed += 1
+					fmt.Fprintf(os.Stderr, "Speed: %d\n", speed)
+				case sdl.K_LEFTBRACKET:
+					speed -= 1
+					if speed < 0 {
+						speed = 0
+					}
+					fmt.Fprintf(os.Stderr, "Speed: %d\n", speed)
+				}
+			}
 		case sdl.MouseButtonEvent:
 			if e.Button == 1 && e.State == 1 {
 				world.SpawnRandomCreature(int(e.X), int(e.Y))

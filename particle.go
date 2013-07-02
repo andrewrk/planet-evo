@@ -87,12 +87,21 @@ func (p *Particle) Step(w *World) {
 		p.StepDna(w)
 		p.Age += 1
 		p.OrganismAge += 1
-		p.Energy -= 0.0001
+		p.Energy -= 0.001
 		if p.Energy <= 0 {
 			fmt.Fprintf(os.Stderr, "Cell at %v ran out of energy.\n", p.Position)
 			p.Die()
 		}
 	}
+	// apply velocity
+	p.Position.Add(&p.Velocity)
+	// apply gravity
+	//const gravityConstant = 0.01
+	//p.Velocity.Y += gravityConstant
+	//if p.Velocity.Y > 1 {
+	//	// can't go faster than the speed of light!
+	//	p.Velocity.Y = 1
+	//}
 }
 
 func (p *Particle) Absorb(other Particle) {

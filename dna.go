@@ -492,9 +492,6 @@ func (p *Particle) performCalc(op DnaOp, left int, right int) int {
 }
 
 func (p *Particle) StepDna(w *World) {
-	if !p.Organic || p.Dead {
-		return
-	}
 	pc := p.ExecutingDna.Index
 	if pc == -1 {
 		// DNA program is permanently halted

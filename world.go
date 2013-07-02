@@ -83,7 +83,6 @@ func (w *World) Step() {
 			}
 			newPart := sourcePart
 			newPart.Step(w)
-			newPart.Position.Add(&newPart.Velocity)
 			w.ApplyParticle(newPart)
 		}
 	}
