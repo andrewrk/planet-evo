@@ -27,14 +27,11 @@ func NewWorld(width int, height int, seed int64) *World {
 	}
 	w.Rand.Seed(seed)
 
-	waterTop := int(float64(height) * 0.5)
-	dirtTop := int(float64(height) * 0.9)
-
 	// introduce a bunch of carbon particles
-	carbonParticleCount := waterTop * w.Width / 50
+	carbonParticleCount := w.Width * w.Height / 50
 	for i := 0; i < carbonParticleCount; i++ {
 		x := w.Rand.Intn(w.Width)
-		y := w.Rand.Intn(waterTop)
+		y := w.Rand.Intn(w.Height)
 		vx := 0.2 - w.Rand.Float64()*0.4
 		vy := 0.2 - w.Rand.Float64()*0.4
 		w.Particles[w.Index(x, y)] = Particle{
@@ -45,22 +42,24 @@ func NewWorld(width int, height int, seed int64) *World {
 	}
 
 	// add water
-	for y := waterTop; y < dirtTop; y++ {
-		for x := 0; x < width; x++ {
-			w.Particles[w.Index(x, y)] = Particle{
-				Type:     WaterParticle,
-				Position: iv(x, y),
-			}
+	waterParticleCount := w.Width * w.Height / 50
+	for i := 0; i < waterParticleCount; i++ {
+		x := w.Rand.Intn(w.Width)
+		y := w.Rand.Intn(w.Height)
+		w.Particles[w.Index(x, y)] = Particle{
+			Type:     WaterParticle,
+			Position: iv(x, y),
 		}
 	}
 
 	// add dirt
-	for y := dirtTop; y < height; y++ {
-		for x := 0; x < width; x++ {
-			w.Particles[w.Index(x, y)] = Particle{
-				Type:     DirtParticle,
-				Position: iv(x, y),
-			}
+	dirtParticleCount := w.Width * w.Height / 50
+	for i := 0; i < dirtParticleCount; i++ {
+		x := w.Rand.Intn(w.Width)
+		y := w.Rand.Intn(w.Height)
+		w.Particles[w.Index(x, y)] = Particle{
+			Type:     DirtParticle,
+			Position: iv(x, y),
 		}
 	}
 
@@ -68,7 +67,7 @@ func NewWorld(width int, height int, seed int64) *World {
 }
 
 func iv(x int, y int) Vec2f {
-	return Vec2f{float64(x), float64(y)}
+	return Vec2f{float64(x) + 0.5, float64(y) + 0.5}
 }
 
 func (w *World) Step() {
@@ -88,34 +87,27 @@ func (w *World) Step() {
 		}
 	}
 
-	// send a light particle down
-	for i := 0; i < 4; i++ {
-		x := w.Rand.Intn(w.Width)
-		w.ApplyParticle(Particle{
-			Type:     LightParticle,
-			Position: iv(x, 1),
-			Velocity: Vec2f{0, 1},
-		})
-	}
-
 	w.Time += 1
 	w.Flip()
-}
-
-func (w *World) ResolveDisplace(p Particle, target Particle) {
-	destIndex := w.AltIndexVec2f(p.Position)
-	w.Particles[destIndex] = p
-	target.Position.Subtract(&p.Velocity)
-	if target.Position.Y >= 0 && target.Position.Y < float64(w.Height) {
-		w.ApplyParticle(target)
-	} else {
-		fmt.Fprintf(os.Stderr, "Error resolving displace at %v\n", p.Position)
-	}
 }
 
 func (w *World) ResolveReplace(p Particle) {
 	destIndex := w.AltIndexVec2f(p.Position)
 	w.Particles[destIndex] = p
+}
+
+func (w *World) ResolveInsert(p Particle, v Vec2f) {
+	p.MoveToPixBorder(v)
+	p.Position.X = mod(p.Position.X, float64(w.Width))
+	p.Position.Y = mod(p.Position.Y, float64(w.Height))
+
+	index := w.AltIndexVec2f(p.Position)
+	destPart := w.Particles[index]
+	w.Particles[index] = p
+	if destPart.Type == NullParticle {
+		return
+	}
+	w.ResolveInsert(destPart, v)
 }
 
 func (w *World) ResolveCollide(p Particle, target Particle) {
@@ -139,6 +131,24 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	target.Velocity.X = v2x
 	target.Velocity.Y = v2y
 
+	p.CheckLowVelocity()
+	target.CheckLowVelocity()
+
+	if p.Velocity.LengthSqrd() == 0 && target.Velocity.LengthSqrd() == 0 {
+		// the particles collided and then stopped moving. we need to
+		// force the moving particle back from whence it came
+		if v1.IsZero() {
+			v2.Negate()
+			w.ResolveInsert(target, v2)
+			w.ApplyParticle(p)
+		} else {
+			v1.Negate()
+			w.ApplyParticle(target)
+			w.ResolveInsert(p, v1)
+		}
+		return
+	}
+
 	// based on the new velocities, calculate how much we must add to the
 	// the positions until a particle exits this pixel
 	p1x := p.Position.X
@@ -157,30 +167,39 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	// distance that must be traveled to exit the pixel
 	if v1x > 0 {
 		p1x = 1 - p1x
-	} else {
-		p1x += 0.00001
 	}
 	if v1y > 0 {
 		p1y = 1 - p1y
-	} else {
-		p1y += 0.00001
 	}
 	if v2x > 0 {
 		p2x = 1 - p2x
-	} else {
-		p2x += 0.00001
 	}
 	if v2y > 0 {
 		p2y = 1 - p2y
-	} else {
-		p2y += 0.00001
 	}
 
 	// calculate the time it will take for each to exit the pixel
-	t1x := p1x / math.Abs(v1x)
-	t1y := p1y / math.Abs(v1y)
-	t2x := p2x / math.Abs(v2x)
-	t2y := p2y / math.Abs(v2y)
+	var t1x, t1y, t2x, t2y float64
+	if v1x == 0 {
+		t1x = math.Inf(1)
+	} else {
+		t1x = p1x / math.Abs(v1x)
+	}
+	if v1y == 0 {
+		t1y = math.Inf(1)
+	} else {
+		t1y = p1y / math.Abs(v1y)
+	}
+	if v2x == 0 {
+		t2x = math.Inf(1)
+	} else {
+		t2x = p2x / math.Abs(v2x)
+	}
+	if v2y == 0 {
+		t2y = math.Inf(1)
+	} else {
+		t2y = p2y / math.Abs(v2y)
+	}
 
 	// whichever one is smaller is the answer
 	t := math.Min(t1x, math.Min(t1y, math.Min(t2x, t2y)))
@@ -189,28 +208,30 @@ func (w *World) ResolveCollide(p Particle, target Particle) {
 	target.Position.X += v2x * t
 	target.Position.Y += v2y * t
 
+	// run another frame if necessary
+	if p.Position.FloorEql(&target.Position) {
+		p.Position.Add(&p.Velocity)
+		target.Position.Add(&target.Velocity)
+	}
+
 	w.ApplyParticle(target)
 	w.ApplyParticle(p)
 }
 
+// modulus the way God intended it.
+func mod(x float64, y float64) float64 {
+	val := math.Mod(x, y)
+	if val < 0 {
+		return val + y
+	}
+	return val
+}
+
 // handle particle collisions
 func (w *World) ApplyParticle(p Particle) {
-	// wrap X
-	if p.Position.X >= float64(w.Width) {
-		p.Position.X -= float64(w.Width)
-	}
-	if p.Position.X < 0 {
-		p.Position.X += float64(w.Width)
-	}
-	// if particles leave out the top, they escape forever
-	if p.Position.Y < 0 {
-		return
-	}
-	// bottom is an impenetreble wall
-	if p.Position.Y >= float64(w.Height) {
-		p.Position.Y = float64(w.Height) - 1
-		p.Velocity.Y = -p.Velocity.Y * ParticleClasses[p.Type].Elasticity
-	}
+	// wrap X and Y
+	p.Position.X = mod(p.Position.X, float64(w.Width))
+	p.Position.Y = mod(p.Position.Y, float64(w.Height))
 
 	destIndex := w.AltIndexVec2f(p.Position)
 	destPart := w.Particles[destIndex]
@@ -228,21 +249,21 @@ func (w *World) ApplyParticle(p Particle) {
 			w.Particles[destIndex].Absorb(p)
 		} else {
 			// move the non-light particle in the negative direction of the light
-			w.ResolveDisplace(p, destPart)
+			panic("light")
 		}
 	case CarbonParticle:
 		switch {
 		case destPart.Type == LightParticle:
-			w.ResolveDisplace(destPart, p)
+			panic("light")
 		case ParticleClasses[destPart.Type].BlockAir:
 			w.ResolveCollide(p, destPart)
 		default:
-			w.ResolveDisplace(p, destPart)
+			panic("carbon")
 		}
 	case WaterParticle:
 		switch {
 		case destPart.Type == LightParticle:
-			w.ResolveDisplace(destPart, p)
+			panic("displace")
 		default:
 			w.ResolveCollide(p, destPart)
 		}
@@ -329,7 +350,6 @@ func (w *World) SpawnRandomCreature(x int, y int) {
 	p := Particle{
 		Type:         ZygoteParticle,
 		Position:     iv(x, y),
-		Organic:      true,
 		Energy:       ParticleClasses[ZygoteParticle].MaxEnergy,
 		IntactDna:    dna,
 		ExecutingDna: dna.PerfectClone(),

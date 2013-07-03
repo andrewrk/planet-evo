@@ -15,16 +15,17 @@ type View struct {
 
 var world *World
 var speed = 1
+var zoom = 3
 
 func main() {
-	const width = 200
-	const height = 200
+	const width = 100
+	const height = 100
 
 	if sdl.Init(sdl.INIT_VIDEO) != 0 {
 		fmt.Fprintf(os.Stderr, "SDL init error\n")
 		return
 	}
-	screen := sdl.SetVideoMode(width, height, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
+	screen := sdl.SetVideoMode(width * zoom, height * zoom, 32, sdl.DOUBLEBUF|sdl.HWSURFACE|sdl.HWACCEL)
 	if screen == nil {
 		fmt.Fprintf(os.Stderr, "SDL setvideomode error\n")
 		return
@@ -50,11 +51,11 @@ func main() {
 		for i := 0; i < speed; i++ {
 			world.Step()
 		}
-		pix := &sdl.Rect{0, 0, 1, 1}
+		pix := &sdl.Rect{0, 0, uint16(zoom), uint16(zoom)}
 		for y := 0; y < world.Height; y++ {
-			pix.Y = int16(y)
+			pix.Y = int16(y * zoom)
 			for x := 0; x < world.Width; x++ {
-				pix.X = int16(x)
+				pix.X = int16(x * zoom)
 				screen.FillRect(pix, world.ColorAt(x, y))
 			}
 		}
@@ -73,10 +74,18 @@ func handleEvents() {
 			if e.State == 1 {
 				switch e.Keysym.Sym {
 				case sdl.K_RIGHTBRACKET:
-					speed += 1
+					if e.Keysym.Mod & sdl.KMOD_LSHIFT != 0 {
+						speed *= 2
+					} else {
+						speed += 1
+					}
 					fmt.Fprintf(os.Stderr, "Speed: %d\n", speed)
 				case sdl.K_LEFTBRACKET:
-					speed -= 1
+					if e.Keysym.Mod & sdl.KMOD_LSHIFT != 0 {
+						speed /= 2
+					} else {
+						speed -= 1
+					}
 					if speed < 0 {
 						speed = 0
 					}
@@ -85,7 +94,9 @@ func handleEvents() {
 			}
 		case sdl.MouseButtonEvent:
 			if e.Button == 1 && e.State == 1 {
-				world.SpawnRandomCreature(int(e.X), int(e.Y))
+				world.SpawnRandomCreature(int(e.X) / zoom, int(e.Y) / zoom)
+			} else if e.Button == 2 && e.State == 1 {
+				fmt.Fprintf(os.Stderr, "(%d, %d)\n", int(e.X) / zoom, int(e.Y) / zoom)
 			}
 		}
 	}

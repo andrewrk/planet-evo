@@ -456,6 +456,7 @@ func (p *Particle) performComparison(op DnaOp, left int, right int) bool {
 func (p *Particle) Die() {
 	p.Energy = 0
 	p.Dead = true
+	p.Type = DirtParticle
 }
 
 func (p *Particle) getNewCellType(op DnaOp) ParticleType {
@@ -467,14 +468,13 @@ func (p *Particle) getNewCellType(op DnaOp) ParticleType {
 }
 
 func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc int, energy float64) {
-	x := int(math.Floor(p.Position.X)) + dx
-	y := int(math.Floor(p.Position.Y)) + dy
+	x := int(math.Floor(p.Position.X))
+	y := int(math.Floor(p.Position.Y))
 	// how is babby formed
 	fmt.Fprintf(os.Stderr, "Cell at %d, %d split into %s\n", x, y, ParticleClasses[newCellType].Name)
 	baby := Particle{
 		Type:         newCellType,
 		Position:     iv(x, y),
-		Organic:      true,
 		Energy:       energy,
 		IntactDna:    p.IntactDna.Clone(p, w),
 		ExecutingDna: p.ExecutingDna.Clone(p, w),
@@ -482,20 +482,7 @@ func (p *Particle) Split(w *World, dx int, dy int, newCellType ParticleType, pc 
 	}
 	baby.InitParamValues()
 	baby.ExecutingDna.Index = pc
-	w.InsertParticle(baby, dx, dy)
-}
-
-func (w *World) InsertParticle(p Particle, dx int, dy int) {
-	index := w.AltIndexVec2f(p.Position)
-	destPart := w.Particles[index]
-	if destPart.Type == NullParticle {
-		w.Particles[index] = p
-		return
-	}
-	w.Particles[index] = p
-	destPart.Position.X += float64(dx)
-	destPart.Position.Y += float64(dy)
-	w.InsertParticle(destPart, dx, dy)
+	w.ResolveInsert(baby, Vec2f{float64(dx), float64(dy)})
 }
 
 func (p *Particle) saveToRegister(op DnaOp, val int) {

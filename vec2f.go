@@ -22,6 +22,10 @@ func (v *Vec2f) Clear() {
 	v.Y = 0
 }
 
+func (v *Vec2f) IsZero() bool {
+	return v.X == 0 && v.Y == 0
+}
+
 func (v *Vec2f) Negate() {
 	v.X = -v.X
 	v.Y = -v.Y
@@ -34,4 +38,18 @@ func (v *Vec2f) Scale(scalar float64) {
 
 func (v *Vec2f) FloorEql(other *Vec2f) bool {
 	return math.Floor(v.X) == math.Floor(other.X) && math.Floor(v.Y) == math.Floor(other.Y)
+}
+
+func (v *Vec2f) Normalize() {
+	l := v.Length()
+	v.X /= l
+	v.Y /= l
+}
+
+func (v *Vec2f) LengthSqrd() float64 {
+	return v.X * v.X + v.Y * v.Y
+}
+
+func (v *Vec2f) Length() float64 {
+	return math.Sqrt(v.LengthSqrd())
 }
