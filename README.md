@@ -2,7 +2,7 @@
 
 Evolution simulation software
 
-![](http://i.imgur.com/ts7HkqZ.png)
+![](http://i.imgur.com/lSIrYJ6.png)
 
 ## DNA & Reproduction
 
