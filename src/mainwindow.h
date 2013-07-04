@@ -31,6 +31,8 @@ private slots:
 
     void on_actionTogglePause_triggered();
 
+    void on_actionRestart_triggered();
+
 private:
     Ui::MainWindow *ui;
     QGraphicsScene scene;
@@ -40,6 +42,8 @@ private:
     int old_speed = 0;
 
     void updateSpeed(int new_speed);
+
+    void restart();
 };
 
 #endif // MAINWINDOW_H

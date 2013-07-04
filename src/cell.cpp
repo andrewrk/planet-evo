@@ -1,6 +1,5 @@
 #include "cell.h"
-
-const double PI = 3.14159265358979;
+#include "util.h"
 
 Cell::Cell(ParticleType type, Vec2 pos, Dna intact_dna, Dna executing_dna) :
     Particle(type, pos),

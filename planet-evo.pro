@@ -27,7 +27,8 @@ HEADERS  += \
     src/particle.h \
     src/cell.h \
     src/dna.h \
-    src/vec2.h
+    src/vec2.h \
+    src/util.h
 
 FORMS    += \
     src/mainwindow.ui

@@ -1,6 +1,8 @@
 #include "dna.h"
 #include "cell.h"
 
+#include "util.h"
+
 Dna Dna::clone(const Cell *c)
 {
     Dna new_dna = *this;
@@ -22,7 +24,7 @@ Dna Dna::clone(const Cell *c)
     // copy instructions one at a time
     foreach (Instruction instr, this->instructions) {
         // roll the dice
-        double roll = qrand() / (double) RAND_MAX;
+        double roll = randf();
         if (roll <= mutation_chance) {
             switch (qrand() % 3) {
             case 0: // 1/3 chance insert a byte here

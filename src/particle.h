@@ -37,17 +37,17 @@ struct ParticleClass {
 };
 
 const ParticleClass PARTICLE_CLASSES[] = {
-    {"Null", 0, QColor("#000000"), 0, 0, 0, 1},
-    {"Carbon", 1, QColor("#374B65"), 0, 0.99, 0, 1},
-    {"Oxygen", 1, QColor("#94B4DD"), 0, 0.99, 0, 1},
-    {"Dirt", 10, QColor("#6B3000"), 0, 0.1, 0.001, 1},
-    {"Water", 10, QColor("#21009D"), 0, 0.7, 0.0001, 1},
-    {"Light", 0, QColor("#FFF433"), 0, 0, 0, 1},
+    {"Null", 0, QColor("#000000"), 0, 0, 0, 4},
+    {"Carbon", 1, QColor("#374B65"), 0, 0.99, 0, 4},
+    {"Oxygen", 1, QColor("#94B4DD"), 0, 0.99, 0, 4},
+    {"Dirt", 10, QColor("#6B3000"), 0, 0.1, 0.001, 4},
+    {"Water", 10, QColor("#21009D"), 0, 0.7, 0.0001, 4},
+    {"Light", 0, QColor("#FFF433"), 0, 0, 0, 4},
 
     // organic particles
-    {"Chloro", 4, QColor("#0A7A00"), 5, 0.1, 0.001, 1},
-    {"Fiber", 6,  QColor("#B75900"), 2, 0.5, 0.002, 1},
-    {"Zygote", 5, QColor("#EFEFEF"), 10, 0.7, 0.0005, 1},
+    {"Chloro", 4, QColor("#0A7A00"), 5, 0.1, 0.001, 4},
+    {"Fiber", 6,  QColor("#B75900"), 2, 0.5, 0.002, 4},
+    {"Zygote", 5, QColor("#EFEFEF"), 10, 0.7, 0.0005, 4},
 
 };
 
