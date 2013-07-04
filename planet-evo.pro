@@ -17,12 +17,17 @@ SOURCES +=\
     src/world.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/particle.cpp
+    src/particle.cpp \
+    src/cell.cpp \
+    src/dna.cpp
 
 HEADERS  += \
     src/world.h \
     src/mainwindow.h \
-    src/particle.h
+    src/particle.h \
+    src/cell.h \
+    src/dna.h \
+    src/vec2.h
 
 FORMS    += \
     src/mainwindow.ui

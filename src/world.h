@@ -3,12 +3,18 @@
 
 #include <QGraphicsScene>
 
+#include "dna.h"
+
 class World
 {
 public:
     World(QGraphicsScene *scene);
 
     void step();
+
+    void spawnRandomCreature(Vec2 pt);
+
+    Particle *getParticleAt(Vec2 pt);
 
 private:
     int time;
