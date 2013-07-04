@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>710</width>
+    <height>371</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Planet Evo</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QGraphicsView" name="graphicsView"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>710</width>
+     <height>27</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;World</string>
+    </property>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Speed">
+    <property name="title">
+     <string>&amp;Speed</string>
+    </property>
+    <addaction name="actionSlower"/>
+    <addaction name="actionFaster"/>
+    <addaction name="separator"/>
+    <addaction name="actionHalf"/>
+    <addaction name="actionDouble"/>
+    <addaction name="separator"/>
+    <addaction name="actionTogglePause"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menu_Speed"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="shortcut">
+    <string/>
+   </property>
+  </action>
+  <action name="actionSlower">
+   <property name="text">
+    <string>S&amp;lower</string>
+   </property>
+   <property name="shortcut">
+    <string>[</string>
+   </property>
+  </action>
+  <action name="actionFaster">
+   <property name="text">
+    <string>&amp;Faster</string>
+   </property>
+   <property name="shortcut">
+    <string>]</string>
+   </property>
+  </action>
+  <action name="actionHalf">
+   <property name="text">
+    <string>&amp;Half</string>
+   </property>
+   <property name="shortcut">
+    <string>{</string>
+   </property>
+  </action>
+  <action name="actionDouble">
+   <property name="text">
+    <string>&amp;Double</string>
+   </property>
+   <property name="shortcut">
+    <string>}</string>
+   </property>
+  </action>
+  <action name="actionTogglePause">
+   <property name="text">
+    <string>&amp;Toggle Pause</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
