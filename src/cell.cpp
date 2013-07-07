@@ -1,6 +1,8 @@
 #include "cell.h"
 #include "util.h"
 
+#include <QtDebug>
+
 Cell::Cell(ParticleType type, Vec2 pos, Dna intact_dna, Dna executing_dna) :
     Particle(type, pos),
     intact_dna(intact_dna),
@@ -303,8 +305,10 @@ void Cell::stepDna(World *w)
         switch (param_values[ProgramEndBehaviorOp - PARAMETER_OP_CODE_START]) {
         case BorCBlock:
             pc = -1;
+            break;
         case BorCContinue:
             pc = 0;
+            break;
         default:
             qFatal("unknown blockorcontinue value");
             throw;
@@ -322,6 +326,7 @@ void Cell::die()
 void Cell::split(Vec2 dir, ParticleType new_cell_type, int pc, double energy, World *w)
 {
     // how is babby formed
+    qDebug() << "creating offspring";
     double new_radius = PARTICLE_CLASSES[new_cell_type].radius;
     Vec2 new_pos = pos + dir * (radius() + new_radius);
     Cell *baby = new Cell(new_cell_type, new_pos, intact_dna.clone(this), executing_dna.clone(this));
@@ -341,7 +346,7 @@ void Cell::step(World *w)
         energy -= 0.001;
         if (energy <= 0) die();
     }
-    Particle::step();
+    Particle::step(w);
 }
 
 bool Cell::organic()

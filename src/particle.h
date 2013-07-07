@@ -5,6 +5,8 @@
 #include <QColor>
 #include "vec2.h"
 
+class World;
+
 enum ParticleType {
     // non-organic particles
     NullParticle,
@@ -60,7 +62,7 @@ public:
     Vec2 pos;
     Vec2 vel;
 
-    virtual void step();
+    virtual void step(World *w);
     virtual bool organic();
 
     QString name();

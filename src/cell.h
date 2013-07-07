@@ -12,16 +12,16 @@ class Cell : public Particle
 public:
     Cell(ParticleType type, Vec2 pos, Dna intact_dna, Dna executing_dna);
 
-    bool alive;
-    double energy;
-    int age;
-    int organism_age;
+    bool alive = true;
+    double energy = 1;
+    int age = 0;
+    int organism_age = 0;
     Dna intact_dna; // original DNA
     Dna executing_dna; // starts as a copy of intact_dna
     int param_values[PARAMETER_OP_CODE_COUNT];
-    int register_x;
-    int register_y;
-    int waiting; // until this many steps are done, do nothing
+    int register_x = 0;
+    int register_y = 0;
+    int waiting = 0; // until this many steps are done, do nothing
 
     double getMutationChance() const;
     int getParamValByOp(DnaOp op) const;
@@ -36,9 +36,9 @@ public:
     void die();
     void split(Vec2 dir, ParticleType new_cell_type, int pc, double energy, World *w);
 
-    void step(World *w);
+    virtual void step(World *w) override;
 
-    bool organic();
+    virtual bool organic() override;
 
     void gainEnergy(int amt);
 };

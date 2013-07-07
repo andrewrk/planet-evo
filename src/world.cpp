@@ -15,7 +15,7 @@ void World::step()
 {
     for (int i = 0; i < particles.size(); i++) {
         SceneParticle sp = particles.at(i);
-        sp.particle->step();
+        sp.particle->step(this);
         sp.circle->setPos(sp.particle->pos.x, sp.particle->pos.y);
     }
     time += 1;
@@ -25,6 +25,7 @@ void World::spawnRandomCreature(Vec2 pt)
 {
     Dna dna = Dna::createSingleCelledPlant();
     Cell *c = new Cell(ZygoteParticle, pt, dna, dna.perfectClone());
+    c->energy = c->maxEnergy();
     addParticle(c);
 }
 

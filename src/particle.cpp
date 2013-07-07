@@ -1,12 +1,14 @@
 #include "particle.h"
+#include "world.h"
 
 Particle::Particle(ParticleType type, Vec2 pos) :
     type(type),
-    pos(pos)
+    pos(pos),
+    vel(0, 0)
 {
 }
 
-void Particle::step()
+void Particle::step(World *w)
 {
     // apply velocity
     pos += vel;
