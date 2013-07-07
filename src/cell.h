@@ -34,7 +34,7 @@ public:
     void stepDna(World *w);
 
     void die();
-    void split(Vec2 dir, ParticleType new_cell_type, int pc, double energy);
+    void split(Vec2 dir, ParticleType new_cell_type, int pc, double energy, World *w);
 
     void step(World *w);
 

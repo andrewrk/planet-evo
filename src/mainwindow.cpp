@@ -18,9 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
     restart();
 
     QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(stepWorld()));
+    bool ok;
+    ok = connect(timer, SIGNAL(timeout()), this, SLOT(stepWorld()));
+    Q_ASSERT(ok);
     timer->start(16);
-
 }
 
 MainWindow::~MainWindow()
@@ -100,4 +101,12 @@ void MainWindow::on_actionTogglePause_triggered()
 void MainWindow::on_actionRestart_triggered()
 {
     restart();
+}
+
+void MainWindow::on_graphicsView_mousePress(QMouseEvent *event)
+{
+    event->accept();
+
+    QPointF pt = ui->graphicsView->mapToScene(event->pos());
+    world->spawnRandomCreature(Vec2(pt.x(), pt.y()));
 }

@@ -234,7 +234,7 @@ void Cell::stepDna(World *w)
                 energy -= new_cell_energy;
                 int do_we_fork = getParamValByOp(CellDivisionDoWeForkOp);
                 int new_cell_pc = do_we_fork == 1 ? getParamValByOp(CellDivisionForkLabelOp) : pc;
-                split(Vec2::direction(dir), new_cell_type, new_cell_pc, new_cell_energy);
+                split(Vec2::direction(dir), new_cell_type, new_cell_pc, new_cell_energy, w);
             } else {
                 int plan = getParamValByOp(CellDivisionContingencyPlanOp);
                 switch (plan) {
@@ -319,16 +319,17 @@ void Cell::die()
     alive = false;
 }
 
-void Cell::split(Vec2 dir, ParticleType new_cell_type, int pc, double energy)
+void Cell::split(Vec2 dir, ParticleType new_cell_type, int pc, double energy, World *w)
 {
     // how is babby formed
     double new_radius = PARTICLE_CLASSES[new_cell_type].radius;
     Vec2 new_pos = pos + dir * (radius() + new_radius);
-    Cell baby = Cell(new_cell_type, new_pos, intact_dna.clone(this), executing_dna.clone(this));
-    baby.energy = energy;
-    baby.organism_age = organism_age;
-    baby.executing_dna.index = pc;
-    // TODO: insert
+    Cell *baby = new Cell(new_cell_type, new_pos, intact_dna.clone(this), executing_dna.clone(this));
+    baby->energy = energy;
+    baby->organism_age = organism_age;
+    baby->executing_dna.index = pc;
+
+    w->addParticle(baby);
 }
 
 void Cell::step(World *w)

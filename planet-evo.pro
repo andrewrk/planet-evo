@@ -19,7 +19,8 @@ SOURCES +=\
     src/mainwindow.cpp \
     src/particle.cpp \
     src/cell.cpp \
-    src/dna.cpp
+    src/dna.cpp \
+    src/evographicsview.cpp
 
 HEADERS  += \
     src/world.h \
@@ -28,7 +29,8 @@ HEADERS  += \
     src/cell.h \
     src/dna.h \
     src/vec2.h \
-    src/util.h
+    src/util.h \
+    src/evographicsview.h
 
 FORMS    += \
     src/mainwindow.ui

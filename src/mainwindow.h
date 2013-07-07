@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QGraphicsScene>
+#include <QMouseEvent>
 #include "world.h"
 
 namespace Ui {
@@ -32,6 +33,8 @@ private slots:
     void on_actionTogglePause_triggered();
 
     void on_actionRestart_triggered();
+
+    void on_graphicsView_mousePress(QMouseEvent *event);
 
 private:
     Ui::MainWindow *ui;
