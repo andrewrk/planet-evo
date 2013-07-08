@@ -195,3 +195,39 @@ is adjusted to point to the same location.
 #### Number
 
 Integer from [0, 255]
+
+## Particles and Cells
+
+Note: this is all vaporware right now, I'm just writing this as brainstorming.
+
+The world in planet-evo is made up of free-floating particles.
+
+Some particles are organic. These are called cells and they have DNA as
+outlined above.
+
+Here are some ideas for particles:
+
+ * Photon - generated at a fixed interval.
+ * Chloro - Absorbs Photon and generates 1 energy.
+ * HerbivoreEnzyme - Absorbs Chloro and generates 2 energy.
+ * CarnivoreEnzyme - Absorbs HerbivoreEnzyme or CarnivoreEnzyme and generates 2 energy.
+ * Fiber - provides structure; other particles can attach to it.
+ * Propeller - provides thrust. DNA sets direction and strength. Can be overriden by neurons.
+ * Neuron - provides a neural network. Sensors are input nodes and Propellers are output nodes.
+ * Membrane - a little tougher than other particles. DNA sets color.
+ * Nerve - connects Neurons to each other and Sensors and Propellers.
+ * ColorSensor - senses the first color of the particle that it encounters, in
+   a direction specified by DNA, limited to a fixed distance away.
+ * Lens - when touching a ColorSensor, adds to the visability range.
+ * Fat - stores excess energy.
+ * Pigment - color is an output that can be controlled by neurons.
+ * Reproductive - DNA can toggle whether on or off. When on, sucks up energy from
+   nearby cells. When has enough, uses DNA from nearby cells as parents for new cell.
+
+Other ideas:
+
+ * Each cell type has some properties:
+   - max age before cell death
+   - mass
+   - how much energy is drained per turn
+   - what food type the cell is turned into when it dies
