@@ -14,11 +14,11 @@ public:
     Vec2(double x, double y) : x(x), y(y) {}
     Vec2() : x(0), y(0) {}
 
-    double lengthSqrd() {
+    double lengthSqrd() const {
         return x * x + y * y;
     }
 
-    double length() {
+    double length() const {
         return sqrt(lengthSqrd());
     }
 
@@ -56,10 +56,24 @@ public:
         return *this;
     }
 
+    Vec2 normalized() const {
+        Vec2 v = *this;
+        v.normalize();
+        return v;
+    }
+
+    double dot(const Vec2 &other) const {
+        return x * other.x + y * other.y;
+    }
+
     // set x and y to zero and return itself
     Vec2& clear() {
         x = 0;
         y = 0;
+        return *this;
+    }
+
+    Vec2 clone() const {
         return *this;
     }
 
@@ -77,7 +91,7 @@ public:
         return normalize().scale(length);
     }
 
-    double angle() {
+    double angle() const {
         return atan2(y, x);
     }
 

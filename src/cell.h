@@ -14,7 +14,6 @@ public:
 
     bool alive = true;
     double energy = 1;
-    int age = 0;
     int organism_age = 0;
     Dna intact_dna; // original DNA
     Dna executing_dna; // starts as a copy of intact_dna

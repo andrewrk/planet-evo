@@ -62,15 +62,6 @@ void MainWindow::restart()
     delete world;
     scene.clear();
     world = new World(&scene);
-
-    // add some bouncy carbon particles
-    for (int i = 0; i < 20; i++) {
-        Vec2 pos(randRange(0.0, world->size.x), randRange(0.0, world->size.y));
-        Particle *p = new Particle(CarbonParticle, pos);
-        p->vel = Vec2::direction(randf() * 2 * PI);
-        p->vel.setLength(randRange(-0.2, 0.2));
-        world->addParticle(p);
-    }
 }
 
 void MainWindow::on_actionFaster_triggered()

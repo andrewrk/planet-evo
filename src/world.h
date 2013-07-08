@@ -21,6 +21,7 @@ public:
     Particle *getParticleAt(Vec2 pt);
 
     void addParticle(Particle *p);
+    void destroyParticle(Particle *p);
 private:
     int time;
     QGraphicsScene *scene;
