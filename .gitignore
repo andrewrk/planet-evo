@@ -1,1 +1,24 @@
-/planet-evo.pro.user
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Operating-system specific database files
+.DS_Store
+Thumbs.db
+
+# Qt specific files
+planet-evo.pro.user
