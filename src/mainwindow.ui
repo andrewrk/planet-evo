@@ -16,11 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="EvoGraphicsView" name="graphicsView">
-      <property name="optimizationFlags">
-       <set>QGraphicsView::DontAdjustForAntialiasing|QGraphicsView::DontSavePainterState</set>
-      </property>
-     </widget>
+     <widget class="EvoGraphicsView" name="graphicsView" native="true"/>
     </item>
    </layout>
   </widget>
@@ -118,8 +114,9 @@
  <customwidgets>
   <customwidget>
    <class>EvoGraphicsView</class>
-   <extends>QGraphicsView</extends>
+   <extends>QWidget</extends>
    <header>src/evographicsview.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -4,12 +4,10 @@
 
 #include <QtDebug>
 
-World::World(QGraphicsScene *scene) :
-    scene(scene)
+World::World()
 {
     time = 0;
     radius = 480;
-    scene->setSceneRect(-radius, -radius, radius * 2, radius * 2);
 }
 
 void World::step()
@@ -34,10 +32,8 @@ void World::step()
     }
 
     // step and update positions
-    for (int i = 0; i < particles.size(); i++) {
-        SceneParticle sp = particles.at(i);
-        sp.particle->step(this);
-        sp.circle->setPos(sp.particle->pos.x, sp.particle->pos.y);
+    foreach (Particle *p, particles) {
+        p->step(this);
     }
 
     time += 1;
@@ -53,26 +49,19 @@ void World::spawnRandomCreature(Vec2 pt)
 
 Particle *World::getParticleAt(Vec2 pt)
 {
-    QGraphicsItem * item = scene->itemAt(pt.x, pt.y);
-    if (item == NULL) return NULL;
-
-    return (Particle*) item->data(0).value<void *>();
+    foreach (Particle *p, particles) {
+        if (p->pos.distanceTo(pt) < p->radius())
+            return p;
+    }
+    return NULL;
 }
 
 void World::addParticle(Particle *p)
 {
-    SceneParticle sp;
-    sp.particle = p;
-    QRect r(-p->radius(), -p->radius(), p->radius() * 2, p->radius() * 2);
-    sp.circle = scene->addEllipse(r, QColor("#000000"), p->color());
-    sp.circle->setPos(p->pos.x, p->pos.y);
-    sp.circle->setData(0, QVariant::fromValue((void *)p));
-    particles.append(sp);
-    p->view_object = sp.circle;
+    particles.append(p);
 }
 
-void World::destroyParticle(Particle *p)
+void World::destroyParticle(Particle *target)
 {
-    QGraphicsItem * circle = (QGraphicsItem*) p->view_object;
-    scene->removeItem(circle);
+    particles.removeOne(target);
 }

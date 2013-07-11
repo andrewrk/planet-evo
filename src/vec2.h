@@ -43,9 +43,19 @@ public:
         y *= scalar;
         return *this;
     }
+    Vec2& operator*=(const Vec2 &other) {
+        x *= other.x;
+        y *= other.y;
+        return *this;
+    }
     Vec2& operator/=(double scalar) {
         x /= scalar;
         y /= scalar;
+        return *this;
+    }
+    Vec2& operator/=(const Vec2 &other) {
+        x /= other.x;
+        y /= other.y;
         return *this;
     }
 
@@ -95,6 +105,10 @@ public:
         return atan2(y, x);
     }
 
+    double distanceTo(const Vec2 &other) {
+        return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
+    }
+
     static Vec2 direction(double radians) {
         return Vec2(cos(radians), sin(radians));
     }
@@ -117,9 +131,18 @@ inline Vec2 operator*(Vec2 left, double scalar) {
     return left;
 }
 
+inline Vec2 operator*(Vec2 left, const Vec2& right) {
+    left *= right;
+    return left;
+}
+
 inline Vec2 operator/(Vec2 left, double scalar) {
     left /= scalar;
     return left;
 }
 
+inline Vec2 operator/(Vec2 left, const Vec2& right) {
+    left /= right;
+    return left;
+}
 #endif // VEC2_H

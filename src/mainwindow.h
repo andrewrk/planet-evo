@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QGraphicsScene>
 #include <QMouseEvent>
 #include "world.h"
 
@@ -38,7 +37,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QGraphicsScene scene;
     World *world;
 
     int speed = 1;

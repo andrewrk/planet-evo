@@ -1,8 +1,6 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <QGraphicsScene>
-#include <QGraphicsItem>
 #include <QList>
 
 #include "dna.h"
@@ -13,25 +11,18 @@ class World
 {
 public:
     double radius;
+    QList<Particle *> particles;
 
-    World(QGraphicsScene *scene);
+    World();
 
     void step();
     void spawnRandomCreature(Vec2 pt);
     Particle *getParticleAt(Vec2 pt);
 
     void addParticle(Particle *p);
-    void destroyParticle(Particle *p);
+    void destroyParticle(Particle *target);
 private:
     int time;
-    QGraphicsScene *scene;
-
-    struct SceneParticle {
-        Particle *particle;
-        QGraphicsItem *circle;
-    };
-
-    QList<SceneParticle> particles;
 };
 
 #endif // WORLD_H

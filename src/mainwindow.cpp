@@ -13,7 +13,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->actionExit->setShortcut(QKeySequence("Alt+F4"));
-    ui->graphicsView->setScene(&scene);
 
     restart();
 
@@ -40,6 +39,7 @@ void MainWindow::stepWorld()
     for (int i = 0; i < speed; i++) {
         world->step();
     }
+    ui->graphicsView->update();
 }
 
 void MainWindow::on_actionSlower_triggered()
@@ -60,8 +60,8 @@ void MainWindow::restart()
     qsrand(seed);
     qDebug() << "Using seed" << seed;
     delete world;
-    scene.clear();
-    world = new World(&scene);
+    world = new World();
+    ui->graphicsView->setWorld(world);
 }
 
 void MainWindow::on_actionFaster_triggered()
@@ -98,6 +98,6 @@ void MainWindow::on_graphicsView_mousePress(QMouseEvent *event)
 {
     event->accept();
 
-    QPointF pt = ui->graphicsView->mapToScene(event->pos());
-    world->spawnRandomCreature(Vec2(pt.x(), pt.y()));
+    Vec2 pt = ui->graphicsView->mapToWorld(event->pos());
+    world->spawnRandomCreature(pt);
 }
