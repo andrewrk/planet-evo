@@ -30,7 +30,13 @@ HEADERS  += \
     src/dna.h \
     src/vec2.h \
     src/util.h \
-    src/evographicsview.h
+    src/evographicsview.h \
+    src/shape.h \
+    src/shape.inl \
+    src/circle.h \
+    src/circle.inl \
+    src/collision-detection.h \
+    src/collision-detection.inl
 
 FORMS    += \
     src/mainwindow.ui
