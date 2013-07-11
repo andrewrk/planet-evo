@@ -12,7 +12,7 @@
 class World
 {
 public:
-    Vec2 size;
+    double radius;
 
     World(QGraphicsScene *scene);
 
