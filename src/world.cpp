@@ -1,6 +1,7 @@
 #include "world.h"
 #include "cell.h"
 #include "util.h"
+#include "collision-detection.h"
 
 #include <QtDebug>
 
@@ -34,6 +35,43 @@ void World::step()
     // step and update positions
     foreach (Particle *p, particles) {
         p->step(this);
+    }
+
+    for (Particle *k : particles) {
+        for (Particle *l : particles) {
+                if (k == l) {
+                        continue;
+                }
+
+                Circle a(Circle::position_t(k->pos.x, k->pos.y), k->radius());
+                Circle b(Circle::position_t(l->pos.x, l->pos.y), l->radius());
+
+                if (isIntersecting(a, b)) {
+                        glm::vec2 normal =
+                                glm::normalize(b.position - a.position);
+
+                        Vec2 m = l->vel - k->vel;
+                        glm::vec2 rv(m.x, m.y);
+                        double speed = glm::dot(rv, normal);
+
+                        if (speed > 0) {
+                                continue;
+                        }
+
+                        double e = glm::min(k->elasticity(), l->elasticity());
+                        double j = -(1 + e) * speed;
+
+                        j /= 1 / k->mass() + 1 / l->mass();
+
+                        glm::vec2 impulse = normal * j;
+
+                        glm::vec2 n = impulse * (1 / k->mass());
+                        k->vel -= Vec2(n.x, n.y);
+
+                        n = impulse * (1 / l->mass());
+                        l->vel -= Vec2(n.x, n.y);
+                }
+        }
     }
 
     time += 1;

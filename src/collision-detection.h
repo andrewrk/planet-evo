@@ -1,11 +1,10 @@
-#ifndef COLLISION_DETECTION_HPP
-#define COLLISION_DETECTION_HPP
+#ifndef COLLISION_DETECTION_H
+#define COLLISION_DETECTION_H
 
 #include "shape.h"
 #include "circle.h"
 
 inline bool isIntersecting(Circle const &first, Circle const &second);
 
-#endif
-
 #include "collision-detection.inl"
+#endif

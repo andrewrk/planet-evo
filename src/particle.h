@@ -4,6 +4,7 @@
 #include <QString>
 #include <QColor>
 #include "vec2.h"
+#include "circle.h"
 
 class World;
 
