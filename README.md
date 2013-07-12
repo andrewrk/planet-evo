@@ -4,6 +4,10 @@ Evolution simulation software
 
 ![](http://i.imgur.com/lSIrYJ6.png)
 
+## Dependencies
+
+ * libglm-dev - C++ library for OpenGL GLSL type-based mathematics
+
 ## DNA & Reproduction
 
 In this project, DNA is an array of instructions. Each instruction
