@@ -69,7 +69,7 @@ void World::step()
                         k->vel -= Vec2(n.x, n.y);
 
                         n = impulse * (1 / l->mass());
-                        l->vel -= Vec2(n.x, n.y);
+                        l->vel += Vec2(n.x, n.y);
                 }
         }
     }
