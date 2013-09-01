@@ -35,8 +35,12 @@ void EvoGraphicsView::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.setBackground(Qt::white);
     painter.eraseRect(0, 0, this->width(), this->height());
-    painter.setPen(QPen(Qt::black, 1));
     painter.setTransform(transform);
+
+    painter.setPen(QPen(Qt::black, 1));
+    painter.drawEllipse(QPointF(0, 0), world->radius, world->radius);
+
+    painter.setPen(QPen(Qt::black, 1));
     foreach (Particle *p, world->particles) {
         painter.setBrush(p->color());
         painter.drawEllipse(QPointF(p->pos.x, p->pos.y), p->radius(), p->radius());
